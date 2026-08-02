@@ -12,7 +12,7 @@ Future<void> main() async {
 
   await Supabase.initialize(
     url: supabaseUrl,
-supabasePublishableKey,
+anonKey: supabasePublishableKey,
   );
 
   runApp(const SocialBookApp());
