@@ -1,24 +1,59 @@
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-class SocialBookAuth {
-  static final SupabaseClient _client = Supabase.instance.client;
+const String supabaseUrl =
+    'https://xsxrcrbcxckicskwppmb.supabase.co';
 
-  static Future<AuthResponse> signUp({
-    required String email,
-    required String password,
-    String? fullName,
-  }) {
-    return _client.auth.signUp(
-      email: email.trim(),
-      password: password,
-      data: {
-        if (fullName != null && fullName.trim().isNotEmpty)
-          'full_name': fullName.trim(),
-      },
+const String supabasePublishableKey =
+    'sb_publishable_0xGXFjbz404LyFWwWo6kzw_wHUgY0NT';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: supabaseUrl,
+    anonKey: supabasePublishableKey,
+  );
+
+  runApp(const SocialBookApp());
+}
+
+class SocialBookApp extends StatelessWidget {
+  const SocialBookApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'Social Book',
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        useMaterial3: true,
+      ),
+      home: const HomePage(),
     );
   }
+}
 
-  static Future<void> signOut() => _client.auth.signOut();
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
 
-  static User? get currentUser => _client.auth.currentUser;
+  @override
+  Widget build(BuildContext context) {
+    final user = Supabase.instance.client.auth.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Social Book'),
+      ),
+      body: Center(
+        child: Text(
+          user == null
+              ? 'Welcome to Social Book'
+              : 'Welcome ${user.email}',
+          textAlign: TextAlign.center,
+        ),
+      ),
+    );
+  }
 }
