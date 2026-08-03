@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace "com.example.socialbook"
-    compileSdk 34
+    compileSdk 33
 
     defaultConfig {
         applicationId "com.example.socialbook"
         minSdk 21
-        targetSdk 34
+        targetSdk 33
         versionCode 1
         versionName "1.0.0"
     }
@@ -23,6 +23,12 @@ android {
 
     kotlinOptions {
         jvmTarget = '1.8'
+    }
+
+    buildTypes {
+        release {
+            signingConfig signingConfigs.debug
+        }
     }
 }
 
