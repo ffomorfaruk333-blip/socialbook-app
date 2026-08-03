@@ -20,10 +20,6 @@ Future<void> main() async {
 
 final supabase = Supabase.instance.client;
 
-// ============================================================
-// APP
-// ============================================================
-
 class SocialBookApp extends StatelessWidget {
   const SocialBookApp({super.key});
 
@@ -39,30 +35,6 @@ class SocialBookApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF7C4DFF),
           brightness: Brightness.dark,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: Color(0xFF101218),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: const Color(0xFF151820),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: BorderSide.none,
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(
-              color: Color(0xFF8B5CF6),
-              width: 1.5,
-            ),
-          ),
         ),
       ),
       home: const AuthGate(),
@@ -88,6 +60,37 @@ class AuthGate extends StatelessWidget {
 }
 
 // ============================================================
+// COMMON INPUT
+// ============================================================
+
+InputDecoration inputStyle(
+  String hint,
+  IconData icon,
+) {
+  return InputDecoration(
+    hintText: hint,
+    prefixIcon: Icon(icon),
+    filled: true,
+    fillColor: const Color(0xFF151820),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(16),
+      borderSide: const BorderSide(
+        color: Color(0xFF8B5CF6),
+        width: 1.5,
+      ),
+    ),
+  );
+}
+
+// ============================================================
 // LOGIN
 // ============================================================
 
@@ -99,18 +102,24 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
 
   bool loading = false;
-  bool hidePassword = true;
+  bool hidden = true;
+
+  void showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text)),
+    );
+  }
 
   Future<void> login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
+    final e = email.text.trim();
+    final p = password.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      message('Email এবং Password দিন');
+    if (e.isEmpty || p.isEmpty) {
+      showMessage('Email এবং Password দিন');
       return;
     }
 
@@ -118,8 +127,8 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
+        email: e,
+        password: p,
       );
 
       if (!mounted) return;
@@ -129,12 +138,12 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(
           builder: (_) => const MainNavigation(),
         ),
-        (route) => false,
+        (_) => false,
       );
-    } on AuthException catch (e) {
-      message(e.message);
+    } on AuthException catch (err) {
+      showMessage(err.message);
     } catch (_) {
-      message('Login করতে সমস্যা হয়েছে');
+      showMessage('Login করতে সমস্যা হয়েছে');
     }
 
     if (mounted) {
@@ -142,16 +151,10 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  void message(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
-  }
-
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    email.dispose();
+    password.dispose();
     super.dispose();
   }
 
@@ -165,8 +168,8 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               children: [
                 Container(
-                  width: 110,
-                  height: 110,
+                  width: 100,
+                  height: 100,
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       colors: [
@@ -174,11 +177,11 @@ class _LoginPageState extends State<LoginPage> {
                         Color(0xFFB388FF),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(32),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Icon(
                     Icons.people_alt_rounded,
-                    size: 58,
+                    size: 55,
                     color: Colors.white,
                   ),
                 ),
@@ -188,7 +191,7 @@ class _LoginPageState extends State<LoginPage> {
                 const Text(
                   'SocialBook',
                   style: TextStyle(
-                    fontSize: 36,
+                    fontSize: 34,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -199,42 +202,42 @@ class _LoginPageState extends State<LoginPage> {
                   'Connect. Share. Discover.',
                   style: TextStyle(
                     color: Colors.grey.shade400,
-                    fontSize: 16,
                   ),
                 ),
 
                 const SizedBox(height: 40),
 
                 TextField(
-                  controller: emailController,
+                  controller: email,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(
-                    hintText: 'Email',
-                    prefixIcon: Icon(Icons.email_outlined),
-                  ),
+                  decoration:
+                      inputStyle('Email', Icons.email_outlined),
                 ),
 
                 const SizedBox(height: 15),
 
                 TextField(
-                  controller: passwordController,
-                  obscureText: hidePassword,
+                  controller: password,
+                  obscureText: hidden,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    prefixIcon: const Icon(
-                      Icons.lock_outline,
-                    ),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       onPressed: () {
-                        setState(() {
-                          hidePassword = !hidePassword;
-                        });
+                        setState(() => hidden = !hidden);
                       },
                       icon: Icon(
-                        hidePassword
+                        hidden
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                       ),
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFF151820),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
@@ -243,14 +246,15 @@ class _LoginPageState extends State<LoginPage> {
 
                 SizedBox(
                   width: double.infinity,
-                  height: 56,
+                  height: 55,
                   child: FilledButton(
                     onPressed: loading ? null : login,
                     child: loading
                         ? const SizedBox(
-                            width: 25,
-                            height: 25,
-                            child: CircularProgressIndicator(
+                            width: 24,
+                            height: 24,
+                            child:
+                                CircularProgressIndicator(
                               strokeWidth: 2,
                             ),
                           )
@@ -264,7 +268,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 15),
+                const SizedBox(height: 12),
 
                 TextButton(
                   onPressed: () {
@@ -277,7 +281,6 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   child: const Text(
                     'Create a new account',
-                    style: TextStyle(fontSize: 15),
                   ),
                 ),
               ],
@@ -301,71 +304,74 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmController = TextEditingController();
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final confirm = TextEditingController();
 
   bool loading = false;
-  bool hidePassword = true;
-  bool hideConfirm = true;
+  bool hidden1 = true;
+  bool hidden2 = true;
+
+  void showMessage(String text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(text)),
+    );
+  }
 
   Future<void> signUp() async {
-    final name = nameController.text.trim();
-    final email = emailController.text.trim();
-    final password = passwordController.text;
-    final confirm = confirmController.text;
+    final n = name.text.trim();
+    final e = email.text.trim();
+    final p = password.text;
+    final c = confirm.text;
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty) {
-      message('সবগুলো তথ্য পূরণ করুন');
+    if (n.isEmpty || e.isEmpty || p.isEmpty || c.isEmpty) {
+      showMessage('সবগুলো তথ্য পূরণ করুন');
       return;
     }
 
-    if (password.length < 6) {
-      message('Password কমপক্ষে ৬ অক্ষরের হতে হবে');
+    if (p.length < 6) {
+      showMessage('Password কমপক্ষে ৬ অক্ষরের হতে হবে');
       return;
     }
 
-    if (password != confirm) {
-      message('Password মিলছে না');
+    if (p != c) {
+      showMessage('Password মিলছে না');
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      final response = await supabase.auth.signUp(
-        email: email,
-        password: password,
+      final result = await supabase.auth.signUp(
+        email: e,
+        password: p,
         data: {
-          'full_name': name,
+          'full_name': n,
         },
       );
 
       if (!mounted) return;
 
-      if (response.session != null) {
+      if (result.session != null) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
             builder: (_) => const MainNavigation(),
           ),
-          (route) => false,
+          (_) => false,
         );
       } else {
-        message(
-          'Account তৈরি হয়েছে। Email confirmation চেক করুন।',
+        showMessage(
+          'Account তৈরি হয়েছে। Email confirmation করুন।',
         );
 
         Navigator.pop(context);
       }
-    } on AuthException catch (e) {
-      message(e.message);
+    } on AuthException catch (err) {
+      showMessage(err.message);
     } catch (_) {
-      message('Sign Up করতে সমস্যা হয়েছে');
+      showMessage('Sign Up করতে সমস্যা হয়েছে');
     }
 
     if (mounted) {
@@ -373,18 +379,12 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  void message(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text)),
-    );
-  }
-
   @override
   void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmController.dispose();
+    name.dispose();
+    email.dispose();
+    password.dispose();
+    confirm.dispose();
     super.dispose();
   }
 
@@ -403,7 +403,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
               const Icon(
                 Icons.person_add_alt_1_rounded,
-                size: 90,
+                size: 85,
                 color: Color(0xFF8B5CF6),
               ),
 
@@ -412,7 +412,7 @@ class _SignUpPageState extends State<SignUpPage> {
               const Text(
                 'Create Your Account',
                 style: TextStyle(
-                  fontSize: 29,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -420,49 +420,53 @@ class _SignUpPageState extends State<SignUpPage> {
               const SizedBox(height: 30),
 
               TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  hintText: 'Full Name',
-                  prefixIcon: Icon(
-                    Icons.person_outline,
-                  ),
+                controller: name,
+                decoration:
+                    inputStyle(
+                  'Full Name',
+                  Icons.person_outline,
                 ),
               ),
 
               const SizedBox(height: 15),
 
               TextField(
-                controller: emailController,
+                controller: email,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  hintText: 'Email',
-                  prefixIcon: Icon(
-                    Icons.email_outlined,
-                  ),
+                decoration:
+                    inputStyle(
+                  'Email',
+                  Icons.email_outlined,
                 ),
               ),
 
               const SizedBox(height: 15),
 
               TextField(
-                controller: passwordController,
-                obscureText: hidePassword,
+                controller: password,
+                obscureText: hidden1,
                 decoration: InputDecoration(
                   hintText: 'Password',
-                  prefixIcon: const Icon(
-                    Icons.lock_outline,
-                  ),
+                  prefixIcon:
+                      const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(() {
-                        hidePassword = !hidePassword;
-                      });
+                      setState(
+                        () => hidden1 = !hidden1,
+                      );
                     },
                     icon: Icon(
-                      hidePassword
+                      hidden1
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                     ),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFF151820),
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
@@ -470,42 +474,44 @@ class _SignUpPageState extends State<SignUpPage> {
               const SizedBox(height: 15),
 
               TextField(
-                controller: confirmController,
-                obscureText: hideConfirm,
+                controller: confirm,
+                obscureText: hidden2,
                 decoration: InputDecoration(
                   hintText: 'Confirm Password',
-                  prefixIcon: const Icon(
-                    Icons.lock_reset_outlined,
-                  ),
+                  prefixIcon:
+                      const Icon(Icons.lock_reset_outlined),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(() {
-                        hideConfirm = !hideConfirm;
-                      });
+                      setState(
+                        () => hidden2 = !hidden2,
+                      );
                     },
                     icon: Icon(
-                      hideConfirm
+                      hidden2
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                     ),
                   ),
+                  filled: true,
+                  fillColor: const Color(0xFF151820),
+                  border: OutlineInputBorder(
+                    borderRadius:
+                        BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 22),
 
               SizedBox(
                 width: double.infinity,
-                height: 56,
+                height: 55,
                 child: FilledButton(
                   onPressed: loading ? null : signUp,
                   child: loading
-                      ? const SizedBox(
-                          width: 25,
-                          height: 25,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                          ),
+                      ? const CircularProgressIndicator(
+                          strokeWidth: 2,
                         )
                       : const Text(
                           'Sign Up',
@@ -547,7 +553,7 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState
     extends State<MainNavigation> {
-  int currentIndex = 0;
+  int index = 0;
 
   final pages = const [
     HomePage(),
@@ -561,15 +567,13 @@ class _MainNavigationState
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: currentIndex,
+        index: index,
         children: pages,
       ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            currentIndex = index;
-          });
+        selectedIndex: index,
+        onDestinationSelected: (value) {
+          setState(() => index = value);
         },
         destinations: const [
           NavigationDestination(
@@ -587,12 +591,9 @@ class _MainNavigationState
             label: 'Create',
           ),
           NavigationDestination(
-            icon: Icon(
-              Icons.notifications_outlined,
-            ),
-            selectedIcon: Icon(
-              Icons.notifications,
-            ),
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon:
+                Icon(Icons.notifications),
             label: 'Alerts',
           ),
           NavigationDestination(
@@ -628,7 +629,7 @@ class _HomePageState extends State<HomePage> {
     {
       'name': 'Gaming Community',
       'text':
-          'Share your favorite gaming moments with everyone. 🎮',
+          'Share your favorite gaming moments! 🎮',
       'likes': 8,
       'liked': false,
     },
@@ -637,7 +638,8 @@ class _HomePageState extends State<HomePage> {
   String get currentName {
     final user = supabase.auth.currentUser;
 
-    return user?.userMetadata?['full_name']
+    return user
+            ?.userMetadata?['full_name']
             ?.toString() ??
         'SocialBook User';
   }
@@ -652,7 +654,7 @@ class _HomePageState extends State<HomePage> {
       MaterialPageRoute(
         builder: (_) => const LoginPage(),
       ),
-      (route) => false,
+      (_) => false,
     );
   }
 
@@ -664,7 +666,7 @@ class _HomePageState extends State<HomePage> {
           'SocialBook',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 25,
+            fontSize: 24,
           ),
         ),
         actions: [
@@ -693,152 +695,99 @@ class _HomePageState extends State<HomePage> {
         child: ListView(
           padding: const EdgeInsets.only(
             top: 12,
-            bottom: 30,
+            bottom: 25,
           ),
           children: [
-            _storySection(),
-            const SizedBox(height: 18),
-            _createPostBox(),
+            _stories(),
+            const SizedBox(height: 15),
+            _createBox(),
             const SizedBox(height: 10),
-            ...posts.map(
-              (post) => _postCard(post),
-            ),
+            ...posts.map(_postCard),
           ],
         ),
       ),
     );
   }
 
-  Widget _storySection() {
+  Widget _stories() {
+    final stories = [
+      ['You', Icons.add],
+      ['Friends', Icons.person],
+      ['Gaming', Icons.gamepad],
+      ['Music', Icons.music_note],
+      ['Travel', Icons.flight],
+    ];
+
     return SizedBox(
-      height: 125,
-      child: ListView(
+      height: 105,
+      child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 16,
-        ),
-        children: [
-          _story(
-            'You',
-            Icons.add,
-            const Color(0xFF7C4DFF),
-          ),
-          _story(
-            'Friends',
-            Icons.people,
-            const Color(0xFFEC4899),
-          ),
-          _story(
-            'Gaming',
-            Icons.gamepad,
-            const Color(0xFF06B6D4),
-          ),
-          _story(
-            'Music',
-            Icons.music_note,
-            const Color(0xFF10B981),
-          ),
-          _story(
-            'Travel',
-            Icons.flight,
-            const Color(0xFFF59E0B),
-          ),
-          _story(
-            'Sports',
-            Icons.sports_soccer,
-            const Color(0xFFEF4444),
-          ),
-        ],
+        padding:
+            const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: stories.length,
+        itemBuilder: (_, i) {
+          return Container(
+            width: 78,
+            margin:
+                const EdgeInsets.only(right: 12),
+            child: Column(
+              children: [
+                CircleAvatar(
+                  radius: 31,
+                  backgroundColor:
+                      const Color(0xFF7C4DFF)
+                          .withOpacity(.25),
+                  child: Icon(
+                    stories[i][1] as IconData,
+                    color:
+                        const Color(0xFF9B6DFF),
+                    size: 29,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  stories[i][0].toString(),
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      const TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
 
-  Widget _story(
-    String title,
-    IconData icon,
-    Color color,
-  ) {
-    return Container(
-      width: 88,
-      margin: const EdgeInsets.only(right: 12),
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(3),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: color,
-                width: 2,
-              ),
-            ),
-            child: CircleAvatar(
-              radius: 33,
-              backgroundColor: color.withOpacity(.20),
-              child: Icon(
-                icon,
-                color: color,
-                size: 30,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _createPostBox() {
+  Widget _createBox() {
     return Card(
-      margin: const EdgeInsets.symmetric(
-        horizontal: 12,
-      ),
+      margin:
+          const EdgeInsets.symmetric(horizontal: 12),
       color: const Color(0xFF12151C),
       child: Padding(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(14),
         child: Row(
           children: [
             CircleAvatar(
-              radius: 23,
-              backgroundColor: const Color(0xFF7C4DFF),
+              backgroundColor:
+                  const Color(0xFF7C4DFF),
               child: Text(
                 currentName.isNotEmpty
                     ? currentName[0].toUpperCase()
                     : 'S',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                ),
               ),
             ),
             const SizedBox(width: 12),
-            Expanded(
-              child: InkWell(
-                borderRadius: BorderRadius.circular(28),
-                onTap: () {},
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1A1E27),
-                    borderRadius: BorderRadius.circular(28),
-                  ),
-                  child: const Text(
-                    'What’s on your mind?',
-                    style: TextStyle(
-                      color: Colors.grey,
-                    ),
-                  ),
-                ),
+            const Expanded(
+              child: Text(
+                'What’s on your mind?',
+                style:
+                    TextStyle(color: Colors.grey),
               ),
+            ),
+            const Icon(
+              Icons.photo_outlined,
+              color: Colors.green,
             ),
           ],
         ),
@@ -847,19 +796,19 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _postCard(
-    Map<String, dynamic> post,
-  ) {
-    final bool liked = post['liked'] as bool;
-    final int likes = post['likes'] as int;
+      Map<String, dynamic> post) {
+    final liked = post['liked'] as bool;
+    final likes = post['likes'] as int;
 
     return Card(
-      margin: const EdgeInsets.symmetric(
+      margin:
+          const EdgeInsets.symmetric(
         horizontal: 12,
         vertical: 7,
       ),
       color: const Color(0xFF12151C),
       child: Padding(
-        padding: const EdgeInsets.all(17),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment:
               CrossAxisAlignment.start,
@@ -867,7 +816,6 @@ class _HomePageState extends State<HomePage> {
             Row(
               children: [
                 const CircleAvatar(
-                  radius: 23,
                   backgroundColor:
                       Color(0xFF7C4DFF),
                   child: Icon(
@@ -875,13 +823,13 @@ class _HomePageState extends State<HomePage> {
                     color: Colors.white,
                   ),
                 ),
-                const SizedBox(width: 11),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     post['name'].toString(),
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 17,
+                      fontSize: 16,
                     ),
                   ),
                 ),
@@ -889,27 +837,26 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 15),
 
             Text(
               post['text'].toString(),
               style: const TextStyle(
                 fontSize: 16,
-                height: 1.5,
+                height: 1.4,
               ),
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 15),
 
             Text(
               '$likes likes',
               style: TextStyle(
                 color: Colors.grey.shade500,
-                fontSize: 13,
               ),
             ),
 
-            const Divider(height: 25),
+            const Divider(),
 
             Row(
               mainAxisAlignment:
@@ -920,11 +867,10 @@ class _HomePageState extends State<HomePage> {
                     setState(() {
                       post['liked'] = !liked;
 
-                      if (post['liked']) {
-                        post['likes'] = likes + 1;
-                      } else {
-                        post['likes'] = likes - 1;
-                      }
+                      post['likes'] =
+                          liked
+                              ? likes - 1
+                              : likes + 1;
                     });
                   },
                   icon: Icon(
@@ -946,11 +892,14 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 TextButton.icon(
-                  onPressed: _showComments,
+                  onPressed: () {
+                    _comments();
+                  },
                   icon: const Icon(
                     Icons.comment_outlined,
                   ),
-                  label: const Text('Comment'),
+                  label:
+                      const Text('Comment'),
                 ),
 
                 TextButton.icon(
@@ -968,15 +917,17 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showComments() {
+  void _comments() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF12151C),
+      backgroundColor:
+          const Color(0xFF12151C),
       builder: (_) {
         return SizedBox(
           height:
-              MediaQuery.of(context).size.height * .60,
+              MediaQuery.of(context).size.height *
+                  .60,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -1001,10 +952,12 @@ class _HomePageState extends State<HomePage> {
                 ),
                 TextField(
                   decoration: InputDecoration(
-                    hintText: 'Write a comment...',
+                    hintText:
+                        'Write a comment...',
                     suffixIcon: IconButton(
                       onPressed: () {},
-                      icon: const Icon(Icons.send),
+                      icon:
+                          const Icon(Icons.send),
                     ),
                   ),
                 ),
@@ -1030,47 +983,32 @@ class SearchPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Search',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style:
+              TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            const TextField(
-              decoration: InputDecoration(
-                hintText:
-                    'Search people, posts, pages...',
-                prefixIcon: Icon(Icons.search),
+            TextField(
+              decoration: inputStyle(
+                'Search people, posts...',
+                Icons.search,
               ),
             ),
-
             const SizedBox(height: 35),
-
             Icon(
-              Icons.search_rounded,
-              size: 90,
+              Icons.search,
+              size: 80,
               color: Colors.grey.shade700,
             ),
-
-            const SizedBox(height: 12),
-
+            const SizedBox(height: 10),
             Text(
               'Search SocialBook',
               style: TextStyle(
                 color: Colors.grey.shade500,
-                fontSize: 19,
-              ),
-            ),
-
-            const SizedBox(height: 6),
-
-            Text(
-              'Find people, posts and communities',
-              style: TextStyle(
-                color: Colors.grey.shade700,
+                fontSize: 18,
               ),
             ),
           ],
@@ -1129,54 +1067,20 @@ class _CreatePostPageState
       appBar: AppBar(
         title: const Text(
           'Create Post',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style:
+              TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           children: [
-            const SizedBox(height: 10),
-
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF12151C),
-                borderRadius:
-                    BorderRadius.circular(20),
-              ),
-              child: const Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor:
-                        Color(0xFF7C4DFF),
-                    child: Icon(Icons.person),
-                  ),
-                  SizedBox(width: 12),
-                  Text(
-                    'Create something new',
-                    style: TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 15),
-
             TextField(
               controller: controller,
-              maxLines: 9,
-              decoration: const InputDecoration(
-                hintText:
-                    'What do you want to share?',
-                alignLabelWithHint: true,
+              maxLines: 8,
+              decoration: inputStyle(
+                'What do you want to share?',
+                Icons.edit,
               ),
             ),
 
@@ -1206,21 +1110,17 @@ class _CreatePostPageState
               ],
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 15),
 
             SizedBox(
               width: double.infinity,
-              height: 55,
+              height: 52,
               child: FilledButton.icon(
                 onPressed: publish,
-                icon: const Icon(Icons.send),
-                label: const Text(
-                  'Publish Post',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                icon:
+                    const Icon(Icons.send),
+                label:
+                    const Text('Publish Post'),
               ),
             ),
           ],
@@ -1241,8 +1141,8 @@ class NotificationsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final notifications = [
       'Welcome to SocialBook 🎉',
-      'Your account is successfully connected.',
-      'Start creating your first post.',
+      'Your account is connected.',
+      'Create your first post.',
       'Discover people and communities.',
     ];
 
@@ -1250,42 +1150,28 @@ class NotificationsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Notifications',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style:
+              TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(14),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(12),
         itemCount: notifications.length,
-        separatorBuilder: (_, __) =>
-            const SizedBox(height: 6),
-        itemBuilder: (context, index) {
+        itemBuilder: (_, i) {
           return Card(
             color: const Color(0xFF12151C),
             child: ListTile(
-              contentPadding:
-                  const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 7,
-              ),
               leading: const CircleAvatar(
-                radius: 25,
                 backgroundColor:
                     Color(0xFF7C4DFF),
                 child: Icon(
                   Icons.notifications,
                 ),
               ),
-              title: Text(
-                notifications[index],
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              subtitle: const Text(
-                'Just now',
-              ),
+              title:
+                  Text(notifications[i]),
+              subtitle:
+                  const Text('Just now'),
             ),
           );
         },
@@ -1302,20 +1188,22 @@ class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   String get name {
-    final user = supabase.auth.currentUser;
+    final user =
+        supabase.auth.currentUser;
 
-    return user?.userMetadata?['full_name']
+    return user
+            ?.userMetadata?['full_name']
             ?.toString() ??
         'SocialBook User';
   }
 
   String get email {
-    return supabase.auth.currentUser?.email ?? '';
+    return supabase.auth.currentUser?.email ??
+        '';
   }
 
   Future<void> logout(
-    BuildContext context,
-  ) async {
+      BuildContext context) async {
     await supabase.auth.signOut();
 
     if (!context.mounted) return;
@@ -1325,59 +1213,39 @@ class ProfilePage extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => const LoginPage(),
       ),
-      (route) => false,
+      (_) => false,
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final firstLetter =
-        name.isNotEmpty
-            ? name[0].toUpperCase()
-            : 'S';
+    final letter = name.isNotEmpty
+        ? name[0].toUpperCase()
+        : 'S';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style:
+              TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.settings_outlined,
-            ),
-          ),
-        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const SizedBox(height: 15),
+          const SizedBox(height: 20),
 
           Center(
-            child: Container(
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: const Color(0xFF8B5CF6),
-                  width: 3,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 60,
-                backgroundColor:
-                    const Color(0xFF7C4DFF),
-                child: Text(
-                  firstLetter,
-                  style: const TextStyle(
-                    fontSize: 45,
-                    fontWeight: FontWeight.bold,
-                  ),
+            child: CircleAvatar(
+              radius: 60,
+              backgroundColor:
+                  const Color(0xFF7C4DFF),
+              child: Text(
+                letter,
+                style: const TextStyle(
+                  fontSize: 44,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -1389,33 +1257,41 @@ class ProfilePage extends StatelessWidget {
             child: Text(
               name,
               style: const TextStyle(
-                fontSize: 27,
+                fontSize: 26,
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
 
-          const SizedBox(height: 6),
+          const SizedBox(height: 7),
 
           Center(
             child: Text(
               email,
               style: TextStyle(
                 color: Colors.grey.shade500,
-                fontSize: 14,
               ),
             ),
           ),
 
-          const SizedBox(height: 28),
+          const SizedBox(height: 30),
 
           Row(
             mainAxisAlignment:
                 MainAxisAlignment.spaceEvenly,
-            children: [
-              _stat('Posts', '0'),
-              _stat('Friends', '0'),
-              _stat('Following', '0'),
+            children: const [
+              _ProfileStat(
+                title: 'Posts',
+                value: '0',
+              ),
+              _ProfileStat(
+                title: 'Friends',
+                value: '0',
+              ),
+              _ProfileStat(
+                title: 'Following',
+                value: '0',
+              ),
             ],
           ),
 
@@ -1429,41 +1305,32 @@ class ProfilePage extends StatelessWidget {
                   leading: const Icon(
                     Icons.person_outline,
                   ),
-                  title: const Text(
-                    'Edit Profile',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
+                  title:
+                      const Text('Edit Profile'),
+                  trailing:
+                      const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),
-
                 ListTile(
                   leading: const Icon(
                     Icons.bookmark_outline,
                   ),
-                  title: const Text(
-                    'Saved Posts',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
+                  title:
+                      const Text('Saved Posts'),
+                  trailing:
+                      const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),
-
                 ListTile(
                   leading: const Icon(
                     Icons.settings_outlined,
                   ),
-                  title: const Text(
-                    'Settings',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
+                  title:
+                      const Text('Settings'),
+                  trailing:
+                      const Icon(Icons.chevron_right),
                   onTap: () {},
                 ),
-
                 ListTile(
                   leading: const Icon(
                     Icons.logout,
@@ -1475,7 +1342,8 @@ class ProfilePage extends StatelessWidget {
                       color: Colors.redAccent,
                     ),
                   ),
-                  onTap: () => logout(context),
+                  onTap: () =>
+                      logout(context),
                 ),
               ],
             ),
@@ -1484,21 +1352,29 @@ class ProfilePage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _stat(
-    String title,
-    String value,
-  ) {
+class _ProfileStat extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _ProfileStat({
+    required this.title,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Column(
       children: [
         Text(
           value,
           style: const TextStyle(
-            fontSize: 23,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
-        const SizedBox(height: 5),
+        const SizedBox(height: 4),
         Text(
           title,
           style: TextStyle(
