@@ -20,6 +20,10 @@ Future<void> main() async {
 
 final supabase = Supabase.instance.client;
 
+// ============================================================
+// APP
+// ============================================================
+
 class SocialBookApp extends StatelessWidget {
   const SocialBookApp({super.key});
 
@@ -31,32 +35,61 @@ class SocialBookApp extends StatelessWidget {
       theme: ThemeData(
         brightness: Brightness.dark,
         useMaterial3: true,
-        colorSchemeSeed: Colors.deepPurple,
-        scaffoldBackgroundColor: const Color(0xFF0B0F14),
+        scaffoldBackgroundColor: const Color(0xFF080A0F),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF7C4DFF),
+          brightness: Brightness.dark,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF101218),
+          foregroundColor: Colors.white,
+          elevation: 0,
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: const Color(0xFF151820),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: const BorderSide(
+              color: Color(0xFF8B5CF6),
+              width: 1.5,
+            ),
+          ),
+        ),
       ),
       home: const AuthGate(),
     );
   }
 }
 
+// ============================================================
+// AUTH GATE
+// ============================================================
+
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final session = supabase.auth.currentSession;
-
-    if (session != null) {
-      return const HomePage();
+    if (supabase.auth.currentSession != null) {
+      return const MainNavigation();
     }
 
     return const LoginPage();
   }
 }
 
-// =========================
-// LOGIN PAGE
-// =========================
+// ============================================================
+// LOGIN
+// ============================================================
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -77,13 +110,11 @@ class _LoginPageState extends State<LoginPage> {
     final password = passwordController.text;
 
     if (email.isEmpty || password.isEmpty) {
-      showMessage('Email এবং Password দিন');
+      message('Email এবং Password দিন');
       return;
     }
 
-    setState(() {
-      loading = true;
-    });
+    setState(() => loading = true);
 
     try {
       await supabase.auth.signInWithPassword(
@@ -93,28 +124,27 @@ class _LoginPageState extends State<LoginPage> {
 
       if (!mounted) return;
 
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (_) => const HomePage(),
+          builder: (_) => const MainNavigation(),
         ),
+        (route) => false,
       );
     } on AuthException catch (e) {
-      showMessage(e.message);
-    } catch (e) {
-      showMessage('Login করতে সমস্যা হয়েছে');
+      message(e.message);
+    } catch (_) {
+      message('Login করতে সমস্যা হয়েছে');
     }
 
     if (mounted) {
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
     }
   }
 
-  void showMessage(String message) {
+  void message(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(text)),
     );
   }
 
@@ -134,18 +164,31 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const Icon(
-                  Icons.people_alt_rounded,
-                  size: 90,
-                  color: Colors.deepPurpleAccent,
+                Container(
+                  width: 110,
+                  height: 110,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        Color(0xFF7C4DFF),
+                        Color(0xFFB388FF),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(32),
+                  ),
+                  child: const Icon(
+                    Icons.people_alt_rounded,
+                    size: 58,
+                    color: Colors.white,
+                  ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 25),
 
                 const Text(
                   'SocialBook',
                   style: TextStyle(
-                    fontSize: 32,
+                    fontSize: 36,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -153,34 +196,34 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 8),
 
                 Text(
-                  'Welcome back!',
+                  'Connect. Share. Discover.',
                   style: TextStyle(
-                    fontSize: 17,
                     color: Colors.grey.shade400,
+                    fontSize: 16,
                   ),
                 ),
 
-                const SizedBox(height: 35),
+                const SizedBox(height: 40),
 
                 TextField(
                   controller: emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Email',
+                    hintText: 'Email',
                     prefixIcon: Icon(Icons.email_outlined),
-                    border: OutlineInputBorder(),
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 15),
 
                 TextField(
                   controller: passwordController,
                   obscureText: hidePassword,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    border: const OutlineInputBorder(),
+                    hintText: 'Password',
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                    ),
                     suffixIcon: IconButton(
                       onPressed: () {
                         setState(() {
@@ -189,30 +232,39 @@ class _LoginPageState extends State<LoginPage> {
                       },
                       icon: Icon(
                         hidePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
                       ),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: 22),
 
                 SizedBox(
                   width: double.infinity,
-                  height: 54,
+                  height: 56,
                   child: FilledButton(
                     onPressed: loading ? null : login,
                     child: loading
-                        ? const CircularProgressIndicator()
+                        ? const SizedBox(
+                            width: 25,
+                            height: 25,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                            ),
+                          )
                         : const Text(
                             'Login',
-                            style: TextStyle(fontSize: 17),
+                            style: TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: 15),
 
                 TextButton(
                   onPressed: () {
@@ -225,6 +277,7 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   child: const Text(
                     'Create a new account',
+                    style: TextStyle(fontSize: 15),
                   ),
                 ),
               ],
@@ -236,9 +289,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-// =========================
-// SIGN UP PAGE
-// =========================
+// ============================================================
+// SIGN UP
+// ============================================================
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -251,39 +304,37 @@ class _SignUpPageState extends State<SignUpPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
+  final confirmController = TextEditingController();
 
   bool loading = false;
   bool hidePassword = true;
-  bool hideConfirmPassword = true;
+  bool hideConfirm = true;
 
   Future<void> signUp() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
-    final confirmPassword = confirmPasswordController.text;
+    final confirm = confirmController.text;
 
     if (name.isEmpty ||
         email.isEmpty ||
         password.isEmpty ||
-        confirmPassword.isEmpty) {
-      showMessage('সবগুলো তথ্য পূরণ করুন');
+        confirm.isEmpty) {
+      message('সবগুলো তথ্য পূরণ করুন');
       return;
     }
 
     if (password.length < 6) {
-      showMessage('Password কমপক্ষে ৬ অক্ষরের হতে হবে');
+      message('Password কমপক্ষে ৬ অক্ষরের হতে হবে');
       return;
     }
 
-    if (password != confirmPassword) {
-      showMessage('Password মিলছে না');
+    if (password != confirm) {
+      message('Password মিলছে না');
       return;
     }
 
-    setState(() {
-      loading = true;
-    });
+    setState(() => loading = true);
 
     try {
       final response = await supabase.auth.signUp(
@@ -300,33 +351,31 @@ class _SignUpPageState extends State<SignUpPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => const HomePage(),
+            builder: (_) => const MainNavigation(),
           ),
           (route) => false,
         );
       } else {
-        showMessage(
-          'Account তৈরি হয়েছে। Email verification চালু থাকলে email চেক করুন।',
+        message(
+          'Account তৈরি হয়েছে। Email confirmation চেক করুন।',
         );
 
         Navigator.pop(context);
       }
     } on AuthException catch (e) {
-      showMessage(e.message);
-    } catch (e) {
-      showMessage('Sign Up করতে সমস্যা হয়েছে');
+      message(e.message);
+    } catch (_) {
+      message('Sign Up করতে সমস্যা হয়েছে');
     }
 
     if (mounted) {
-      setState(() {
-        loading = false;
-      });
+      setState(() => loading = false);
     }
   }
 
-  void showMessage(String message) {
+  void message(String text) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(text)),
     );
   }
 
@@ -335,7 +384,7 @@ class _SignUpPageState extends State<SignUpPage> {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    confirmPasswordController.dispose();
+    confirmController.dispose();
     super.dispose();
   }
 
@@ -350,18 +399,20 @@ class _SignUpPageState extends State<SignUpPage> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
+              const SizedBox(height: 15),
+
               const Icon(
                 Icons.person_add_alt_1_rounded,
-                size: 75,
-                color: Colors.deepPurpleAccent,
+                size: 90,
+                color: Color(0xFF8B5CF6),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
 
               const Text(
                 'Create Your Account',
                 style: TextStyle(
-                  fontSize: 27,
+                  fontSize: 29,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -371,33 +422,36 @@ class _SignUpPageState extends State<SignUpPage> {
               TextField(
                 controller: nameController,
                 decoration: const InputDecoration(
-                  labelText: 'Full Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                  border: OutlineInputBorder(),
+                  hintText: 'Full Name',
+                  prefixIcon: Icon(
+                    Icons.person_outline,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 15),
 
               TextField(
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(),
+                  hintText: 'Email',
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                  ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 15),
 
               TextField(
                 controller: passwordController,
                 obscureText: hidePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  border: const OutlineInputBorder(),
+                  hintText: 'Password',
+                  prefixIcon: const Icon(
+                    Icons.lock_outline,
+                  ),
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
@@ -406,33 +460,33 @@ class _SignUpPageState extends State<SignUpPage> {
                     },
                     icon: Icon(
                       hidePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 15),
 
               TextField(
-                controller: confirmPasswordController,
-                obscureText: hideConfirmPassword,
+                controller: confirmController,
+                obscureText: hideConfirm,
                 decoration: InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: const Icon(Icons.lock_reset_outlined),
-                  border: const OutlineInputBorder(),
+                  hintText: 'Confirm Password',
+                  prefixIcon: const Icon(
+                    Icons.lock_reset_outlined,
+                  ),
                   suffixIcon: IconButton(
                     onPressed: () {
                       setState(() {
-                        hideConfirmPassword =
-                            !hideConfirmPassword;
+                        hideConfirm = !hideConfirm;
                       });
                     },
                     icon: Icon(
-                      hideConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                      hideConfirm
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
                     ),
                   ),
                 ),
@@ -442,24 +496,31 @@ class _SignUpPageState extends State<SignUpPage> {
 
               SizedBox(
                 width: double.infinity,
-                height: 54,
+                height: 56,
                 child: FilledButton(
                   onPressed: loading ? null : signUp,
                   child: loading
-                      ? const CircularProgressIndicator()
+                      ? const SizedBox(
+                          width: 25,
+                          height: 25,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Text(
                           'Sign Up',
-                          style: TextStyle(fontSize: 17),
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                 ),
               ),
 
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
 
               TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 child: const Text(
                   'Already have an account? Login',
                 ),
@@ -472,14 +533,789 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 }
 
-// =========================
-// HOME PAGE
-// =========================
+// ============================================================
+// MAIN NAVIGATION
+// ============================================================
 
-class HomePage extends StatelessWidget {
+class MainNavigation extends StatefulWidget {
+  const MainNavigation({super.key});
+
+  @override
+  State<MainNavigation> createState() =>
+      _MainNavigationState();
+}
+
+class _MainNavigationState
+    extends State<MainNavigation> {
+  int currentIndex = 0;
+
+  final pages = const [
+    HomePage(),
+    SearchPage(),
+    CreatePostPage(),
+    NotificationsPage(),
+    ProfilePage(),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: currentIndex,
+        children: pages,
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: currentIndex,
+        onDestinationSelected: (index) {
+          setState(() {
+            currentIndex = index;
+          });
+        },
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.search),
+            label: 'Search',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.add_box_outlined),
+            selectedIcon: Icon(Icons.add_box),
+            label: 'Create',
+          ),
+          NavigationDestination(
+            icon: Icon(
+              Icons.notifications_outlined,
+            ),
+            selectedIcon: Icon(
+              Icons.notifications,
+            ),
+            label: 'Alerts',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// HOME
+// ============================================================
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
-  Future<void> logout(BuildContext context) async {
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final List<Map<String, dynamic>> posts = [
+    {
+      'name': 'SocialBook',
+      'text': 'Welcome to SocialBook! 🎉',
+      'likes': 12,
+      'liked': false,
+    },
+    {
+      'name': 'Gaming Community',
+      'text':
+          'Share your favorite gaming moments with everyone. 🎮',
+      'likes': 8,
+      'liked': false,
+    },
+  ];
+
+  String get currentName {
+    final user = supabase.auth.currentUser;
+
+    return user?.userMetadata?['full_name']
+            ?.toString() ??
+        'SocialBook User';
+  }
+
+  Future<void> logout() async {
+    await supabase.auth.signOut();
+
+    if (!mounted) return;
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(),
+      ),
+      (route) => false,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'SocialBook',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 25,
+          ),
+        ),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(
+              Icons.chat_bubble_outline,
+            ),
+          ),
+          IconButton(
+            onPressed: logout,
+            icon: const Icon(Icons.logout),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.delayed(
+            const Duration(milliseconds: 400),
+          );
+
+          if (mounted) {
+            setState(() {});
+          }
+        },
+        child: ListView(
+          padding: const EdgeInsets.only(
+            top: 12,
+            bottom: 30,
+          ),
+          children: [
+            _storySection(),
+            const SizedBox(height: 18),
+            _createPostBox(),
+            const SizedBox(height: 10),
+            ...posts.map(
+              (post) => _postCard(post),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _storySection() {
+    return SizedBox(
+      height: 125,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(
+          horizontal: 16,
+        ),
+        children: [
+          _story(
+            'You',
+            Icons.add,
+            const Color(0xFF7C4DFF),
+          ),
+          _story(
+            'Friends',
+            Icons.people,
+            const Color(0xFFEC4899),
+          ),
+          _story(
+            'Gaming',
+            Icons.gamepad,
+            const Color(0xFF06B6D4),
+          ),
+          _story(
+            'Music',
+            Icons.music_note,
+            const Color(0xFF10B981),
+          ),
+          _story(
+            'Travel',
+            Icons.flight,
+            const Color(0xFFF59E0B),
+          ),
+          _story(
+            'Sports',
+            Icons.sports_soccer,
+            const Color(0xFFEF4444),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _story(
+    String title,
+    IconData icon,
+    Color color,
+  ) {
+    return Container(
+      width: 88,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: color,
+                width: 2,
+              ),
+            ),
+            child: CircleAvatar(
+              radius: 33,
+              backgroundColor: color.withOpacity(.20),
+              child: Icon(
+                icon,
+                color: color,
+                size: 30,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            title,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _createPostBox() {
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+      ),
+      color: const Color(0xFF12151C),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 23,
+              backgroundColor: const Color(0xFF7C4DFF),
+              child: Text(
+                currentName.isNotEmpty
+                    ? currentName[0].toUpperCase()
+                    : 'S',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(28),
+                onTap: () {},
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1A1E27),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: const Text(
+                    'What’s on your mind?',
+                    style: TextStyle(
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _postCard(
+    Map<String, dynamic> post,
+  ) {
+    final bool liked = post['liked'] as bool;
+    final int likes = post['likes'] as int;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 7,
+      ),
+      color: const Color(0xFF12151C),
+      child: Padding(
+        padding: const EdgeInsets.all(17),
+        child: Column(
+          crossAxisAlignment:
+              CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const CircleAvatar(
+                  radius: 23,
+                  backgroundColor:
+                      Color(0xFF7C4DFF),
+                  child: Icon(
+                    Icons.person,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Text(
+                    post['name'].toString(),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.more_horiz),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            Text(
+              post['text'].toString(),
+              style: const TextStyle(
+                fontSize: 16,
+                height: 1.5,
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
+            Text(
+              '$likes likes',
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 13,
+              ),
+            ),
+
+            const Divider(height: 25),
+
+            Row(
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceAround,
+              children: [
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      post['liked'] = !liked;
+
+                      if (post['liked']) {
+                        post['likes'] = likes + 1;
+                      } else {
+                        post['likes'] = likes - 1;
+                      }
+                    });
+                  },
+                  icon: Icon(
+                    liked
+                        ? Icons.favorite
+                        : Icons.favorite_border,
+                    color: liked
+                        ? Colors.pink
+                        : Colors.grey,
+                  ),
+                  label: Text(
+                    'Like',
+                    style: TextStyle(
+                      color: liked
+                          ? Colors.pink
+                          : Colors.grey,
+                    ),
+                  ),
+                ),
+
+                TextButton.icon(
+                  onPressed: _showComments,
+                  icon: const Icon(
+                    Icons.comment_outlined,
+                  ),
+                  label: const Text('Comment'),
+                ),
+
+                TextButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.share_outlined,
+                  ),
+                  label: const Text('Share'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showComments() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF12151C),
+      builder: (_) {
+        return SizedBox(
+          height:
+              MediaQuery.of(context).size.height * .60,
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                const Text(
+                  'Comments',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Expanded(
+                  child: Center(
+                    child: Text(
+                      'No comments yet',
+                      style: TextStyle(
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Write a comment...',
+                    suffixIcon: IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.send),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+
+class SearchPage extends StatelessWidget {
+  const SearchPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Search',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            const TextField(
+              decoration: InputDecoration(
+                hintText:
+                    'Search people, posts, pages...',
+                prefixIcon: Icon(Icons.search),
+              ),
+            ),
+
+            const SizedBox(height: 35),
+
+            Icon(
+              Icons.search_rounded,
+              size: 90,
+              color: Colors.grey.shade700,
+            ),
+
+            const SizedBox(height: 12),
+
+            Text(
+              'Search SocialBook',
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 19,
+              ),
+            ),
+
+            const SizedBox(height: 6),
+
+            Text(
+              'Find people, posts and communities',
+              style: TextStyle(
+                color: Colors.grey.shade700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// CREATE POST
+// ============================================================
+
+class CreatePostPage extends StatefulWidget {
+  const CreatePostPage({super.key});
+
+  @override
+  State<CreatePostPage> createState() =>
+      _CreatePostPageState();
+}
+
+class _CreatePostPageState
+    extends State<CreatePostPage> {
+  final controller = TextEditingController();
+
+  void publish() {
+    final text = controller.text.trim();
+
+    if (text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('কিছু লিখুন'),
+        ),
+      );
+      return;
+    }
+
+    controller.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Post তৈরি হয়েছে!'),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Create Post',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: const Color(0xFF12151C),
+                borderRadius:
+                    BorderRadius.circular(20),
+              ),
+              child: const Row(
+                children: [
+                  CircleAvatar(
+                    radius: 25,
+                    backgroundColor:
+                        Color(0xFF7C4DFF),
+                    child: Icon(Icons.person),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Create something new',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            TextField(
+              controller: controller,
+              maxLines: 9,
+              decoration: const InputDecoration(
+                hintText:
+                    'What do you want to share?',
+                alignLabelWithHint: true,
+              ),
+            ),
+
+            const SizedBox(height: 15),
+
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.photo_outlined,
+                    ),
+                    label: const Text('Photo'),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.videocam_outlined,
+                    ),
+                    label: const Text('Video'),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: FilledButton.icon(
+                onPressed: publish,
+                icon: const Icon(Icons.send),
+                label: const Text(
+                  'Publish Post',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// NOTIFICATIONS
+// ============================================================
+
+class NotificationsPage extends StatelessWidget {
+  const NotificationsPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final notifications = [
+      'Welcome to SocialBook 🎉',
+      'Your account is successfully connected.',
+      'Start creating your first post.',
+      'Discover people and communities.',
+    ];
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Notifications',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(14),
+        itemCount: notifications.length,
+        separatorBuilder: (_, __) =>
+            const SizedBox(height: 6),
+        itemBuilder: (context, index) {
+          return Card(
+            color: const Color(0xFF12151C),
+            child: ListTile(
+              contentPadding:
+                  const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 7,
+              ),
+              leading: const CircleAvatar(
+                radius: 25,
+                backgroundColor:
+                    Color(0xFF7C4DFF),
+                child: Icon(
+                  Icons.notifications,
+                ),
+              ),
+              title: Text(
+                notifications[index],
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              subtitle: const Text(
+                'Just now',
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================================
+// PROFILE
+// ============================================================
+
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
+
+  String get name {
+    final user = supabase.auth.currentUser;
+
+    return user?.userMetadata?['full_name']
+            ?.toString() ??
+        'SocialBook User';
+  }
+
+  String get email {
+    return supabase.auth.currentUser?.email ?? '';
+  }
+
+  Future<void> logout(
+    BuildContext context,
+  ) async {
     await supabase.auth.signOut();
 
     if (!context.mounted) return;
@@ -495,132 +1331,181 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = supabase.auth.currentUser;
-
-    final fullName =
-        user?.userMetadata?['full_name'] ?? 'SocialBook User';
+    final firstLetter =
+        name.isNotEmpty
+            ? name[0].toUpperCase()
+            : 'S';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
-          'SocialBook',
+          'Profile',
           style: TextStyle(
             fontWeight: FontWeight.bold,
           ),
         ),
-        centerTitle: true,
         actions: [
           IconButton(
-            onPressed: () => logout(context),
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            onPressed: () {},
+            icon: const Icon(
+              Icons.settings_outlined,
+            ),
           ),
         ],
       ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.delayed(
-            const Duration(milliseconds: 500),
-          );
-        },
-        child: ListView(
-          padding: const EdgeInsets.all(24),
-          children: [
-            const SizedBox(height: 20),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const SizedBox(height: 15),
 
-            CircleAvatar(
-              radius: 48,
-              child: Text(
-                fullName.toString().isNotEmpty
-                    ? fullName
-                        .toString()
-                        .substring(0, 1)
-                        .toUpperCase()
-                    : 'S',
-                style: const TextStyle(
-                  fontSize: 34,
-                  fontWeight: FontWeight.bold,
+          Center(
+            child: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: const Color(0xFF8B5CF6),
+                  width: 3,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 60,
+                backgroundColor:
+                    const Color(0xFF7C4DFF),
+                child: Text(
+                  firstLetter,
+                  style: const TextStyle(
+                    fontSize: 45,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
+          ),
 
-            const SizedBox(height: 20),
+          const SizedBox(height: 18),
 
-            Text(
-              'Welcome, $fullName',
-              textAlign: TextAlign.center,
+          Center(
+            child: Text(
+              name,
               style: const TextStyle(
-                fontSize: 26,
+                fontSize: 27,
                 fontWeight: FontWeight.bold,
               ),
             ),
+          ),
 
-            const SizedBox(height: 10),
+          const SizedBox(height: 6),
 
-            Text(
-              user?.email ?? '',
-              textAlign: TextAlign.center,
+          Center(
+            child: Text(
+              email,
               style: TextStyle(
-                color: Colors.grey.shade400,
+                color: Colors.grey.shade500,
+                fontSize: 14,
               ),
             ),
+          ),
 
-            const SizedBox(height: 35),
+          const SizedBox(height: 28),
 
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  children: [
-                    const Icon(
-                      Icons.people_alt_rounded,
-                      size: 65,
-                      color: Colors.deepPurpleAccent,
-                    ),
+          Row(
+            mainAxisAlignment:
+                MainAxisAlignment.spaceEvenly,
+            children: [
+              _stat('Posts', '0'),
+              _stat('Friends', '0'),
+              _stat('Following', '0'),
+            ],
+          ),
 
-                    const SizedBox(height: 15),
+          const SizedBox(height: 30),
 
-                    const Text(
-                      'SocialBook is ready!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-
-                    Text(
-                      'Your account is connected with Supabase.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: Colors.grey.shade400,
-                      ),
-                    ),
-                  ],
+          Card(
+            color: const Color(0xFF12151C),
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(
+                    Icons.person_outline,
+                  ),
+                  title: const Text(
+                    'Edit Profile',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                  ),
+                  onTap: () {},
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 24),
+                ListTile(
+                  leading: const Icon(
+                    Icons.bookmark_outline,
+                  ),
+                  title: const Text(
+                    'Saved Posts',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                  ),
+                  onTap: () {},
+                ),
 
-            FilledButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'SocialBook is working!',
+                ListTile(
+                  leading: const Icon(
+                    Icons.settings_outlined,
+                  ),
+                  title: const Text(
+                    'Settings',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                  ),
+                  onTap: () {},
+                ),
+
+                ListTile(
+                  leading: const Icon(
+                    Icons.logout,
+                    color: Colors.redAccent,
+                  ),
+                  title: const Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.redAccent,
                     ),
                   ),
-                );
-              },
-              icon: const Icon(Icons.rocket_launch),
-              label: const Text('Get Started'),
+                  onTap: () => logout(context),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _stat(
+    String title,
+    String value,
+  ) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 23,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.grey.shade500,
+          ),
+        ),
+      ],
     );
   }
 }
