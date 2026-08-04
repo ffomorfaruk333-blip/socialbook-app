@@ -1005,15 +1005,11 @@ class _HomePageState
     final metadata =
         currentUser?.userMetadata;
 
-    final author =
-        isMine
-            ? metadata?['full_name']
-                    ?.toString() ??
-                currentUser.email
-                    ?.split('@')
-                    .first ??
-                'You'
-            : 'SocialBook User';
+    final author = isMine
+    ? ((metadata?['full_name']?.toString().trim().isNotEmpty ?? false)
+        ? metadata!['full_name'].toString()
+        : (currentUser?.email?.split('@').first ?? 'You'))
+    : 'SocialBook User';
 
     final letter = author.isNotEmpty
         ? author[0].toUpperCase()
