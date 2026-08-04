@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:share_plus/share_plus.dart';
 
 const supabaseUrl = 'https://xsxrcrbcxckicskwppmb.supabase.co';
+
 const supabasePublishableKey =
     'sb_publishable_0xGXFjbz404LyFWwWo6kzw_wHUgY0NT';
 
@@ -143,7 +145,7 @@ class _LoginPageState extends State<LoginPage> {
       );
     } on AuthException catch (e) {
       if (mounted) message(context, e.message);
-    } catch (e) {
+    } catch (_) {
       if (mounted) message(context, 'Login করা যায়নি');
     } finally {
       if (mounted) setState(() => loading = false);
@@ -348,7 +350,7 @@ class _SignUpPageState extends State<SignUpPage> {
       }
     } on AuthException catch (e) {
       if (mounted) message(context, e.message);
-    } catch (e) {
+    } catch (_) {
       if (mounted) message(context, 'Signup করা যায়নি');
     } finally {
       if (mounted) setState(() => loading = false);
@@ -367,7 +369,9 @@ class _SignUpPageState extends State<SignUpPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Account')),
+      appBar: AppBar(
+        title: const Text('Create Account'),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -474,7 +478,9 @@ class _SignUpPageState extends State<SignUpPage> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Already have an account? Login'),
+                child: const Text(
+                  'Already have an account? Login',
+                ),
               ),
             ],
           ),
@@ -660,7 +666,35 @@ class _HomePageState extends State<HomePage> {
         message(context, 'Post delete হয়েছে');
       }
     } catch (e) {
-      if (mounted) message(context, 'Delete করা যায়নি: $e');
+      if (mounted) {
+        message(context, 'Delete করা যায়নি: $e');
+      }
+    }
+  }
+
+  // ==========================================================
+  // SHARE POST
+  // ==========================================================
+
+  Future<void> sharePost(Map<String, dynamic> post) async {
+    final content = post['content']?.toString() ?? '';
+
+    final shareText =
+        'SocialBook Post\n\n'
+        '$content\n\n'
+        'Shared from SocialBook';
+
+    try {
+      await SharePlus.instance.share(
+        ShareParams(
+          text: shareText,
+          subject: 'SocialBook Post',
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        message(context, 'Share করা যায়নি: $e');
+      }
     }
   }
 
@@ -772,7 +806,8 @@ class _HomePageState extends State<HomePage> {
     String author = 'SocialBook User';
 
     if (mine) {
-      author = user?.userMetadata?['full_name']?.toString() ??
+      author =
+          user?.userMetadata?['full_name']?.toString() ??
           user?.email?.split('@').first ??
           'You';
     }
@@ -800,7 +835,8 @@ class _HomePageState extends State<HomePage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment:
+                        CrossAxisAlignment.start,
                     children: [
                       Text(
                         author,
@@ -847,7 +883,8 @@ class _HomePageState extends State<HomePage> {
             const SizedBox(height: 15),
             const Divider(),
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment:
+                  MainAxisAlignment.spaceAround,
               children: [
                 TextButton.icon(
                   onPressed: () {
@@ -856,21 +893,27 @@ class _HomePageState extends State<HomePage> {
                       'Like database system পরের ধাপে যুক্ত করা যাবে',
                     );
                   },
-                  icon: const Icon(Icons.favorite_border),
+                  icon: const Icon(
+                    Icons.favorite_border,
+                  ),
                   label: const Text('Like'),
                 ),
                 TextButton.icon(
                   onPressed: () {
                     showComments(post['id']);
                   },
-                  icon: const Icon(Icons.comment_outlined),
+                  icon: const Icon(
+                    Icons.comment_outlined,
+                  ),
                   label: const Text('Comment'),
                 ),
                 TextButton.icon(
                   onPressed: () {
-                    message(context, 'Share link তৈরি হবে');
+                    sharePost(post);
                   },
-                  icon: const Icon(Icons.share_outlined),
+                  icon: const Icon(
+                    Icons.share_outlined,
+                  ),
                   label: const Text('Share'),
                 ),
               ],
@@ -966,7 +1009,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
         );
       }
     } finally {
-      if (mounted) setState(() => publishing = false);
+      if (mounted) {
+        setState(() => publishing = false);
+      }
     }
   }
 
@@ -982,7 +1027,9 @@ class _CreatePostPageState extends State<CreatePostPage> {
       appBar: AppBar(
         title: const Text(
           'Create Post',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           Padding(
@@ -1012,19 +1059,24 @@ class _CreatePostPageState extends State<CreatePostPage> {
                   controller: controller,
                   maxLines: null,
                   expands: true,
-                  textAlignVertical: TextAlignVertical.top,
+                  textAlignVertical:
+                      TextAlignVertical.top,
                   style: const TextStyle(
                     fontSize: 17,
                   ),
                   decoration: InputDecoration(
-                    hintText: "What's on your mind?",
+                    hintText:
+                        "What's on your mind?",
                     filled: true,
-                    fillColor: const Color(0xFF151820),
+                    fillColor:
+                        const Color(0xFF151820),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius:
+                          BorderRadius.circular(18),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.all(18),
+                    contentPadding:
+                        const EdgeInsets.all(18),
                   ),
                 ),
               ),
@@ -1033,8 +1085,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
                 width: double.infinity,
                 height: 55,
                 child: FilledButton.icon(
-                  onPressed: publishing ? null : publish,
-                  icon: const Icon(Icons.send_rounded),
+                  onPressed:
+                      publishing ? null : publish,
+                  icon:
+                      const Icon(Icons.send_rounded),
                   label: Text(
                     publishing
                         ? 'Publishing...'
@@ -1063,10 +1117,12 @@ class CommentSheet extends StatefulWidget {
   });
 
   @override
-  State<CommentSheet> createState() => _CommentSheetState();
+  State<CommentSheet> createState() =>
+      _CommentSheetState();
 }
 
-class _CommentSheetState extends State<CommentSheet> {
+class _CommentSheetState
+    extends State<CommentSheet> {
   final controller = TextEditingController();
 
   List<Map<String, dynamic>> comments = [];
@@ -1085,16 +1141,22 @@ class _CommentSheetState extends State<CommentSheet> {
           .from('comments')
           .select()
           .eq('post_id', widget.postId)
-          .order('created_at', ascending: true);
+          .order(
+            'created_at',
+            ascending: true,
+          );
 
       if (!mounted) return;
 
       setState(() {
-        comments = List<Map<String, dynamic>>.from(data);
+        comments =
+            List<Map<String, dynamic>>.from(data);
         loading = false;
       });
     } catch (_) {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -1118,10 +1180,15 @@ class _CommentSheetState extends State<CommentSheet> {
       await loadComments();
     } catch (e) {
       if (mounted) {
-        message(context, 'Comment করা যায়নি: $e');
+        message(
+          context,
+          'Comment করা যায়নি: $e',
+        );
       }
     } finally {
-      if (mounted) setState(() => sending = false);
+      if (mounted) {
+        setState(() => sending = false);
+      }
     }
   }
 
@@ -1135,7 +1202,8 @@ class _CommentSheetState extends State<CommentSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SizedBox(
-        height: MediaQuery.of(context).size.height * .75,
+        height:
+            MediaQuery.of(context).size.height * .75,
         child: Padding(
           padding: const EdgeInsets.all(18),
           child: Column(
@@ -1151,7 +1219,8 @@ class _CommentSheetState extends State<CommentSheet> {
               Expanded(
                 child: loading
                     ? const Center(
-                        child: CircularProgressIndicator(),
+                        child:
+                            CircularProgressIndicator(),
                       )
                     : comments.isEmpty
                         ? const Center(
@@ -1163,15 +1232,20 @@ class _CommentSheetState extends State<CommentSheet> {
                             ),
                           )
                         : ListView.builder(
-                            itemCount: comments.length,
+                            itemCount:
+                                comments.length,
                             itemBuilder: (_, i) {
                               return ListTile(
-                                leading: const CircleAvatar(
-                                  child: Icon(Icons.person),
+                                leading:
+                                    const CircleAvatar(
+                                  child: Icon(
+                                    Icons.person,
+                                  ),
                                 ),
                                 title: Text(
-                                  comments[i]['content']
-                                          ?.toString() ??
+                                  comments[i]
+                                          ['content']
+                                      ?.toString() ??
                                       '',
                                 ),
                               );
@@ -1183,21 +1257,31 @@ class _CommentSheetState extends State<CommentSheet> {
                   Expanded(
                     child: TextField(
                       controller: controller,
-                      decoration: InputDecoration(
-                        hintText: 'Write a comment...',
+                      decoration:
+                          InputDecoration(
+                        hintText:
+                            'Write a comment...',
                         filled: true,
-                        fillColor: const Color(0xFF191C24),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide.none,
+                        fillColor:
+                            const Color(0xFF191C24),
+                        border:
+                            OutlineInputBorder(
+                          borderRadius:
+                              BorderRadius.circular(
+                            16,
+                          ),
+                          borderSide:
+                              BorderSide.none,
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filled(
-                    onPressed: sending ? null : addComment,
-                    icon: const Icon(Icons.send),
+                    onPressed:
+                        sending ? null : addComment,
+                    icon:
+                        const Icon(Icons.send),
                   ),
                 ],
               ),
@@ -1217,7 +1301,8 @@ class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<SearchPage> createState() =>
+      _SearchPageState();
 }
 
 class _SearchPageState extends State<SearchPage> {
@@ -1238,17 +1323,28 @@ class _SearchPageState extends State<SearchPage> {
           .from('posts')
           .select()
           .ilike('content', '%$q%')
-          .order('created_at', ascending: false);
+          .order(
+            'created_at',
+            ascending: false,
+          );
 
       if (!mounted) return;
 
       setState(() {
-        results = List<Map<String, dynamic>>.from(data);
+        results =
+            List<Map<String, dynamic>>.from(data);
       });
     } catch (e) {
-      if (mounted) message(context, 'Search error: $e');
+      if (mounted) {
+        message(
+          context,
+          'Search error: $e',
+        );
+      }
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() => loading = false);
+      }
     }
   }
 
@@ -1264,7 +1360,9 @@ class _SearchPageState extends State<SearchPage> {
       appBar: AppBar(
         title: const Text(
           'Search',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Padding(
@@ -1276,15 +1374,20 @@ class _SearchPageState extends State<SearchPage> {
               onSubmitted: (_) => search(),
               decoration: InputDecoration(
                 hintText: 'Search posts...',
-                prefixIcon: const Icon(Icons.search),
+                prefixIcon:
+                    const Icon(Icons.search),
                 suffixIcon: IconButton(
                   onPressed: search,
-                  icon: const Icon(Icons.arrow_forward),
+                  icon: const Icon(
+                    Icons.arrow_forward,
+                  ),
                 ),
                 filled: true,
-                fillColor: const Color(0xFF151820),
+                fillColor:
+                    const Color(0xFF151820),
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius:
+                      BorderRadius.circular(16),
                   borderSide: BorderSide.none,
                 ),
               ),
@@ -1293,22 +1396,31 @@ class _SearchPageState extends State<SearchPage> {
             Expanded(
               child: loading
                   ? const Center(
-                      child: CircularProgressIndicator(),
+                      child:
+                          CircularProgressIndicator(),
                     )
                   : results.isEmpty
                       ? const Center(
                           child: Text(
                             'Search result এখানে দেখাবে',
-                            style: TextStyle(color: Colors.grey),
+                            style: TextStyle(
+                              color: Colors.grey,
+                            ),
                           ),
                         )
                       : ListView.builder(
-                          itemCount: results.length,
+                          itemCount:
+                              results.length,
                           itemBuilder: (_, i) {
                             return Card(
-                              color: const Color(0xFF12151C),
+                              color: const Color(
+                                0xFF12151C,
+                              ),
                               child: Padding(
-                                padding: const EdgeInsets.all(15),
+                                padding:
+                                    const EdgeInsets.all(
+                                  15,
+                                ),
                                 child: Text(
                                   results[i]['content']
                                           ?.toString() ??
@@ -1330,7 +1442,8 @@ class _SearchPageState extends State<SearchPage> {
 // NOTIFICATIONS
 // ============================================================
 
-class NotificationsPage extends StatelessWidget {
+class NotificationsPage
+    extends StatelessWidget {
   const NotificationsPage({super.key});
 
   @override
@@ -1339,7 +1452,9 @@ class NotificationsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Notifications',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: ListView(
@@ -1349,11 +1464,15 @@ class NotificationsPage extends StatelessWidget {
             color: Color(0xFF12151C),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: Color(0xFF7C4DFF),
-                child: Icon(Icons.notifications),
+                backgroundColor:
+                    Color(0xFF7C4DFF),
+                child:
+                    Icon(Icons.notifications),
               ),
-              title: Text('Welcome to SocialBook 🎉'),
-              subtitle: Text('Your account is ready'),
+              title:
+                  Text('Welcome to SocialBook 🎉'),
+              subtitle:
+                  Text('Your account is ready'),
             ),
           ),
         ],
@@ -1370,14 +1489,17 @@ class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() => _ProfilePageState();
+  State<ProfilePage> createState() =>
+      _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState
+    extends State<ProfilePage> {
   String get name {
     final user = supabase.auth.currentUser;
 
-    return user?.userMetadata?['full_name']?.toString() ??
+    return user?.userMetadata?['full_name']
+            ?.toString() ??
         user?.email?.split('@').first ??
         'SocialBook User';
   }
@@ -1391,23 +1513,29 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> editName() async {
-    final controller = TextEditingController(text: name);
+    final controller =
+        TextEditingController(text: name);
 
-    final value = await showDialog<String>(
+    final value =
+        await showDialog<String>(
       context: context,
       builder: (_) {
         return AlertDialog(
-          title: const Text('Edit Name'),
+          title:
+              const Text('Edit Name'),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
+            decoration:
+                const InputDecoration(
               hintText: 'Your name',
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              onPressed: () =>
+                  Navigator.pop(context),
+              child:
+                  const Text('Cancel'),
             ),
             FilledButton(
               onPressed: () {
@@ -1416,7 +1544,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   controller.text.trim(),
                 );
               },
-              child: const Text('Save'),
+              child:
+                  const Text('Save'),
             ),
           ],
         );
@@ -1425,7 +1554,9 @@ class _ProfilePageState extends State<ProfilePage> {
 
     controller.dispose();
 
-    if (value == null || value.isEmpty) return;
+    if (value == null || value.isEmpty) {
+      return;
+    }
 
     try {
       await supabase.auth.updateUser(
@@ -1438,11 +1569,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (mounted) {
         setState(() {});
-        message(context, 'Profile update হয়েছে');
+        message(
+          context,
+          'Profile update হয়েছে',
+        );
       }
     } catch (e) {
       if (mounted) {
-        message(context, 'Profile update করা যায়নি: $e');
+        message(
+          context,
+          'Profile update করা যায়নি: $e',
+        );
       }
     }
   }
@@ -1450,28 +1587,35 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final letter =
-        name.isNotEmpty ? name[0].toUpperCase() : 'U';
+        name.isNotEmpty
+            ? name[0].toUpperCase()
+            : 'U';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Profile',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding:
+            const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 20),
           Center(
             child: CircleAvatar(
               radius: 60,
-              backgroundColor: const Color(0xFF7C4DFF),
+              backgroundColor:
+                  const Color(0xFF7C4DFF),
               child: Text(
                 letter,
                 style: const TextStyle(
                   fontSize: 44,
-                  fontWeight: FontWeight.bold,
+                  fontWeight:
+                      FontWeight.bold,
                 ),
               ),
             ),
@@ -1482,7 +1626,8 @@ class _ProfilePageState extends State<ProfilePage> {
               name,
               style: const TextStyle(
                 fontSize: 26,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                    FontWeight.bold,
               ),
             ),
           ),
@@ -1491,27 +1636,44 @@ class _ProfilePageState extends State<ProfilePage> {
             child: Text(
               email,
               style: TextStyle(
-                color: Colors.grey.shade500,
+                color:
+                    Colors.grey.shade500,
               ),
             ),
           ),
           const SizedBox(height: 30),
           Card(
-            color: const Color(0xFF12151C),
+            color:
+                const Color(0xFF12151C),
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(Icons.edit_outlined),
-                  title: const Text('Edit Profile'),
-                  trailing: const Icon(Icons.chevron_right),
+                  leading: const Icon(
+                    Icons.edit_outlined,
+                  ),
+                  title: const Text(
+                    'Edit Profile',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                  ),
                   onTap: editName,
                 ),
                 ListTile(
-                  leading: const Icon(Icons.settings_outlined),
-                  title: const Text('Settings'),
-                  trailing: const Icon(Icons.chevron_right),
+                  leading: const Icon(
+                    Icons.settings_outlined,
+                  ),
+                  title: const Text(
+                    'Settings',
+                  ),
+                  trailing: const Icon(
+                    Icons.chevron_right,
+                  ),
                   onTap: () {
-                    message(context, 'Settings আসছে');
+                    message(
+                      context,
+                      'Settings আসছে',
+                    );
                   },
                 ),
                 ListTile(
