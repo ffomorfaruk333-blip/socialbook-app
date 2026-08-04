@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const String supabaseUrl =
-    'https://xsxrcrbcxckicskwppmb.supabase.co';
-
-const String supabasePublishableKey =
+const supabaseUrl = 'https://xsxrcrbcxckicskwppmb.supabase.co';
+const supabasePublishableKey =
     'sb_publishable_0xGXFjbz404LyFWwWo6kzw_wHUgY0NT';
 
 Future<void> main() async {
@@ -42,49 +40,23 @@ class SocialBookApp extends StatelessWidget {
   }
 }
 
-// ============================================================
-// AUTH GATE
-// ============================================================
-
-class AuthGate extends StatefulWidget {
+class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  void initState() {
-    super.initState();
-
-    supabase.auth.onAuthStateChange.listen((data) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final session = supabase.auth.currentSession;
-
-    if (session != null) {
-      return const MainNavigation();
-    }
-
-    return const LoginPage();
+    return StreamBuilder<AuthState>(
+      stream: supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        return supabase.auth.currentSession == null
+            ? const LoginPage()
+            : const MainNavigation();
+      },
+    );
   }
 }
 
-// ============================================================
-// COMMON UI
-// ============================================================
-
-InputDecoration inputDecoration(
-  String hint,
-  IconData icon,
-) {
+InputDecoration field(String hint, IconData icon) {
   return InputDecoration(
     hintText: hint,
     prefixIcon: Icon(icon),
@@ -94,29 +66,15 @@ InputDecoration inputDecoration(
       borderRadius: BorderRadius.circular(16),
       borderSide: BorderSide.none,
     ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: BorderSide.none,
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
-      borderSide: const BorderSide(
-        color: Color(0xFF8B5CF6),
-        width: 1.5,
-      ),
-    ),
   );
 }
 
-void showAppMessage(
-  BuildContext context,
-  String message,
-) {
+void message(BuildContext context, String text) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(text),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -134,21 +92,15 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final email = TextEditingController();
+  final pass = TextEditingController();
 
   bool loading = false;
-  bool hidden = true;
+  bool hide = true;
 
   Future<void> login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
-      showAppMessage(
-        context,
-        'Email এবং Password দিন',
-      );
+    if (email.text.trim().isEmpty || pass.text.isEmpty) {
+      message(context, 'ইমেইল ও পাসওয়ার্ড দিন');
       return;
     }
 
@@ -156,19 +108,16 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
+        email: email.text.trim(),
+        password: pass.text,
       );
-    } on AuthException catch (error) {
+    } on AuthException catch (e) {
       if (mounted) {
-        showAppMessage(context, error.message);
+        message(context, e.message);
       }
     } catch (_) {
       if (mounted) {
-        showAppMessage(
-          context,
-          'Login করতে সমস্যা হয়েছে',
-        );
+        message(context, 'Login করতে সমস্যা হয়েছে');
       }
     } finally {
       if (mounted) {
@@ -179,8 +128,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    email.dispose();
+    pass.dispose();
     super.dispose();
   }
 
@@ -193,30 +142,12 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const SizedBox(height: 30),
-
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [
-                        Color(0xFF7C4DFF),
-                        Color(0xFFB388FF),
-                      ],
-                    ),
-                    borderRadius:
-                        BorderRadius.circular(30),
-                  ),
-                  child: const Icon(
-                    Icons.people_alt_rounded,
-                    size: 55,
-                    color: Colors.white,
-                  ),
+                const Icon(
+                  Icons.people_alt_rounded,
+                  size: 90,
+                  color: Color(0xFF9B6DFF),
                 ),
-
-                const SizedBox(height: 24),
-
+                const SizedBox(height: 18),
                 const Text(
                   'SocialBook',
                   style: TextStyle(
@@ -224,103 +155,67 @@ class _LoginPageState extends State<LoginPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
-                Text(
+                const Text(
                   'Connect. Share. Discover.',
-                  style: TextStyle(
-                    color: Colors.grey.shade400,
-                  ),
+                  style: TextStyle(color: Colors.grey),
                 ),
-
-                const SizedBox(height: 40),
-
+                const SizedBox(height: 38),
                 TextField(
-                  controller: emailController,
-                  keyboardType:
-                      TextInputType.emailAddress,
-                  decoration: inputDecoration(
-                    'Email',
-                    Icons.email_outlined,
-                  ),
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration:
+                      field('Email', Icons.email_outlined),
                 ),
-
-                const SizedBox(height: 15),
-
+                const SizedBox(height: 14),
                 TextField(
-                  controller: passwordController,
-                  obscureText: hidden,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline),
+                  controller: pass,
+                  obscureText: hide,
+                  decoration: field(
+                    'Password',
+                    Icons.lock_outline,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       onPressed: () {
-                        setState(
-                          () => hidden = !hidden,
-                        );
+                        setState(() => hide = !hide);
                       },
                       icon: Icon(
-                        hidden
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                        hide
+                            ? Icons.visibility
+                            : Icons.visibility_off,
                       ),
-                    ),
-                    filled: true,
-                    fillColor:
-                        const Color(0xFF151820),
-                    border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 22),
-
+                const SizedBox(height: 20),
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: FilledButton(
-                    onPressed:
-                        loading ? null : login,
+                    onPressed: loading ? null : login,
                     child: loading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child:
-                                CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
+                        ? const CircularProgressIndicator(
+                            strokeWidth: 2,
                           )
                         : const Text(
                             'Login',
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
                 ),
-
-                const SizedBox(height: 10),
-
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            const SignUpPage(),
+                        builder: (_) => const SignupPage(),
                       ),
                     );
                   },
-                  child: const Text(
-                    'Create a new account',
-                  ),
+                  child: const Text('Create a new account'),
                 ),
               ],
             ),
@@ -335,105 +230,76 @@ class _LoginPageState extends State<LoginPage> {
 // SIGN UP
 // ============================================================
 
-class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<SignUpPage> createState() =>
-      _SignUpPageState();
+  State<SignupPage> createState() => _SignupState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmController = TextEditingController();
+class _SignupState extends State<SignupPage> {
+  final name = TextEditingController();
+  final username = TextEditingController();
+  final email = TextEditingController();
+  final pass = TextEditingController();
+  final confirm = TextEditingController();
 
   bool loading = false;
-  bool hiddenPassword = true;
-  bool hiddenConfirm = true;
+  bool h1 = true;
+  bool h2 = true;
 
-  Future<void> signUp() async {
-    final name =
-        nameController.text.trim();
-    final email =
-        emailController.text.trim();
-    final password =
-        passwordController.text;
-    final confirm =
-        confirmController.text;
+  Future<void> signup() async {
+    final n = name.text.trim();
+    final u = username.text.trim().toLowerCase();
+    final e = email.text.trim();
+    final p = pass.text;
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty) {
-      showAppMessage(
+    if ([n, u, e, p, confirm.text].any((x) => x.isEmpty)) {
+      message(context, 'সব তথ্য পূরণ করুন');
+      return;
+    }
+
+    if (p.length < 6) {
+      message(
         context,
-        'সবগুলো তথ্য পূরণ করুন',
+        'পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে',
       );
       return;
     }
 
-    if (password.length < 6) {
-      showAppMessage(
-        context,
-        'Password কমপক্ষে ৬ অক্ষরের হতে হবে',
-      );
-      return;
-    }
-
-    if (password != confirm) {
-      showAppMessage(
-        context,
-        'Password মিলছে না',
-      );
+    if (p != confirm.text) {
+      message(context, 'পাসওয়ার্ড মিলছে না');
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      final result =
-          await supabase.auth.signUp(
-        email: email,
-        password: password,
+      final result = await supabase.auth.signUp(
+        email: e,
+        password: p,
         data: {
-          'full_name': name,
+          'full_name': n,
+          'username': u,
         },
       );
 
       if (!mounted) return;
 
-      if (result.session != null) {
-        Navigator.pushAndRemoveUntil(
+      if (result.session == null) {
+        message(
           context,
-          MaterialPageRoute(
-            builder: (_) =>
-                const MainNavigation(),
-          ),
-          (_) => false,
+          'অ্যাকাউন্ট তৈরি হয়েছে। ইমেইল কনফার্ম করে Login করুন।',
         );
-      } else {
-        showAppMessage(
-          context,
-          'Account তৈরি হয়েছে। Email confirmation করুন।',
-        );
-
         Navigator.pop(context);
       }
-    } on AuthException catch (error) {
+    } on AuthException catch (e) {
       if (mounted) {
-        showAppMessage(
-          context,
-          error.message,
-        );
+        message(context, e.message);
       }
     } catch (_) {
       if (mounted) {
-        showAppMessage(
-          context,
-          'Sign Up করতে সমস্যা হয়েছে',
-        );
+        message(context, 'Sign Up করতে সমস্যা হয়েছে');
       }
     } finally {
       if (mounted) {
@@ -444,10 +310,11 @@ class _SignUpPageState extends State<SignUpPage> {
 
   @override
   void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmController.dispose();
+    name.dispose();
+    username.dispose();
+    email.dispose();
+    pass.dispose();
+    confirm.dispose();
     super.dispose();
   }
 
@@ -457,154 +324,100 @@ class _SignUpPageState extends State<SignUpPage> {
       appBar: AppBar(
         title: const Text('Create Account'),
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              const SizedBox(height: 15),
-
-              const Icon(
-                Icons.person_add_alt_1_rounded,
-                size: 80,
-                color: Color(0xFF8B5CF6),
-              ),
-
-              const SizedBox(height: 18),
-
-              const Text(
-                'Create Your Account',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-
-              const SizedBox(height: 30),
-
-              TextField(
-                controller: nameController,
-                textCapitalization:
-                    TextCapitalization.words,
-                decoration: inputDecoration(
-                  'Full Name',
-                  Icons.person_outline,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: emailController,
-                keyboardType:
-                    TextInputType.emailAddress,
-                decoration: inputDecoration(
-                  'Email',
-                  Icons.email_outlined,
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: passwordController,
-                obscureText: hiddenPassword,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  prefixIcon:
-                      const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(
-                        () => hiddenPassword =
-                            !hiddenPassword,
-                      );
-                    },
-                    icon: Icon(
-                      hiddenPassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor:
-                      const Color(0xFF151820),
-                  border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              TextField(
-                controller: confirmController,
-                obscureText: hiddenConfirm,
-                decoration: InputDecoration(
-                  hintText: 'Confirm Password',
-                  prefixIcon:
-                      const Icon(Icons.lock_reset),
-                  suffixIcon: IconButton(
-                    onPressed: () {
-                      setState(
-                        () => hiddenConfirm =
-                            !hiddenConfirm,
-                      );
-                    },
-                    icon: Icon(
-                      hiddenConfirm
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
-                    ),
-                  ),
-                  filled: true,
-                  fillColor:
-                      const Color(0xFF151820),
-                  border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 22),
-
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: FilledButton(
-                  onPressed:
-                      loading ? null : signUp,
-                  child: loading
-                      ? const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        )
-                      : const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight:
-                                FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              TextButton(
-                onPressed: () =>
-                    Navigator.pop(context),
-                child: const Text(
-                  'Already have an account? Login',
-                ),
-              ),
-            ],
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          const Icon(
+            Icons.person_add_alt_1_rounded,
+            size: 75,
+            color: Color(0xFF9B6DFF),
           ),
-        ),
+          const SizedBox(height: 15),
+          const Text(
+            'Create Your Account',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 25),
+          TextField(
+            controller: name,
+            decoration:
+                field('Full Name', Icons.person_outline),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: username,
+            decoration:
+                field('Username', Icons.alternate_email),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: email,
+            keyboardType: TextInputType.emailAddress,
+            decoration:
+                field('Email', Icons.email_outlined),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: pass,
+            obscureText: h1,
+            decoration: field(
+              'Password',
+              Icons.lock_outline,
+            ).copyWith(
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() => h1 = !h1);
+                },
+                icon: Icon(
+                  h1
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: confirm,
+            obscureText: h2,
+            decoration: field(
+              'Confirm Password',
+              Icons.lock_reset,
+            ).copyWith(
+              suffixIcon: IconButton(
+                onPressed: () {
+                  setState(() => h2 = !h2);
+                },
+                icon: Icon(
+                  h2
+                      ? Icons.visibility
+                      : Icons.visibility_off,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          SizedBox(
+            height: 55,
+            child: FilledButton(
+              onPressed: loading ? null : signup,
+              child: loading
+                  ? const CircularProgressIndicator(
+                      strokeWidth: 2,
+                    )
+                  : const Text('Sign Up'),
+            ),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              'Already have an account? Login',
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -624,58 +437,34 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState
     extends State<MainNavigation> {
-  int currentIndex = 0;
+  int index = 0;
 
   @override
   Widget build(BuildContext context) {
-    final pages = [
-      HomePage(
-        onCreatePost: () async {
-          final result =
-              await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  const CreatePostPage(),
-            ),
-          );
-
-          if (result == true && mounted) {
-            setState(() {});
-          }
-        },
-      ),
-      const SearchPage(),
-      CreatePostPage(
-        onPublished: () {
-          setState(() {
-            currentIndex = 0;
-          });
-        },
-      ),
-      const NotificationsPage(),
-      const ProfilePage(),
-    ];
-
     return Scaffold(
       body: IndexedStack(
-        index: currentIndex,
-        children: pages,
+        index: index,
+        children: [
+          const HomePage(),
+          const SearchPage(),
+          CreatePostPage(
+            onPublished: () {
+              setState(() => index = 0);
+            },
+          ),
+          const NotificationsPage(),
+          const ProfilePage(),
+        ],
       ),
-      bottomNavigationBar:
-          NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            currentIndex = index;
-          });
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (i) {
+          setState(() => index = i);
         },
         destinations: const [
           NavigationDestination(
-            icon:
-                Icon(Icons.home_outlined),
-            selectedIcon:
-                Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
           NavigationDestination(
@@ -683,24 +472,18 @@ class _MainNavigationState
             label: 'Search',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.add_box_outlined),
-            selectedIcon:
-                Icon(Icons.add_box),
+            icon: Icon(Icons.add_box_outlined),
+            selectedIcon: Icon(Icons.add_box),
             label: 'Create',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.notifications_outlined),
-            selectedIcon:
-                Icon(Icons.notifications),
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
             label: 'Alerts',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.person_outline),
-            selectedIcon:
-                Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -714,96 +497,131 @@ class _MainNavigationState
 // ============================================================
 
 class HomePage extends StatefulWidget {
-  final Future<void> Function()? onCreatePost;
-
-  const HomePage({
-    super.key,
-    this.onCreatePost,
-  });
+  const HomePage({super.key});
 
   @override
-  State<HomePage> createState() =>
-      _HomePageState();
+  State<HomePage> createState() => _HomeState();
 }
 
-class _HomePageState
-    extends State<HomePage> {
+class _HomeState extends State<HomePage> {
   List<Map<String, dynamic>> posts = [];
-
-  bool postsLoading = true;
-
-  String get currentName {
-    final user =
-        supabase.auth.currentUser;
-
-    return user
-            ?.userMetadata?['full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
-        'SocialBook User';
-  }
+  bool loading = true;
 
   @override
   void initState() {
     super.initState();
-    loadPosts();
+    load();
   }
 
-  Future<void> loadPosts() async {
-    if (mounted) {
-      setState(() {
-        postsLoading = true;
-      });
-    }
+  Future<void> load() async {
+    setState(() => loading = true);
 
     try {
       final data = await supabase
           .from('posts')
-          .select()
+          .select(
+            'id,user_id,content,created_at,profiles(full_name,username)',
+          )
           .order(
             'created_at',
             ascending: false,
           );
 
-      if (!mounted) return;
-
-      setState(() {
-        posts = List<
-            Map<String, dynamic>>.from(
-          data,
-        );
-      });
-    } catch (_) {
       if (mounted) {
-        showAppMessage(
+        setState(() {
+          posts =
+              List<Map<String, dynamic>>.from(data);
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        message(
           context,
-          'Posts load করতে সমস্যা হয়েছে',
+          'Posts load হয়নি: $e',
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          postsLoading = false;
-        });
+        setState(() => loading = false);
       }
     }
   }
 
-  Future<void> logout() async {
-    await supabase.auth.signOut();
+  String author(Map<String, dynamic> post) {
+    final profile = post['profiles'];
 
-    if (!mounted) return;
+    if (profile is Map) {
+      return (
+        profile['full_name'] ??
+        profile['username'] ??
+        'User'
+      ).toString();
+    }
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const LoginPage(),
-      ),
-      (_) => false,
-    );
+    return 'SocialBook User';
+  }
+
+  Future<void> deletePost(dynamic id) async {
+    try {
+      await supabase
+          .from('posts')
+          .delete()
+          .eq('id', id);
+
+      await load();
+    } catch (e) {
+      if (mounted) {
+        message(
+          context,
+          'Delete হয়নি: $e',
+        );
+      }
+    }
+  }
+
+  Future<void> like(dynamic id) async {
+    final me = supabase.auth.currentUser;
+
+    if (me == null) return;
+
+    try {
+      final old = await supabase
+          .from('post_likes')
+          .select('id')
+          .eq('post_id', id)
+          .eq('user_id', me.id)
+          .maybeSingle();
+
+      if (old == null) {
+        await supabase
+            .from('post_likes')
+            .insert({
+          'post_id': id,
+          'user_id': me.id,
+        });
+      } else {
+        await supabase
+            .from('post_likes')
+            .delete()
+            .eq('id', old['id']);
+      }
+
+      if (mounted) {
+        message(
+          context,
+          old == null
+              ? 'Like হয়েছে ❤️'
+              : 'Like সরানো হয়েছে',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        message(
+          context,
+          'Like করতে সমস্যা হয়েছে: $e',
+        );
+      }
+    }
   }
 
   @override
@@ -819,480 +637,180 @@ class _HomePageState
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.chat_bubble_outline,
-            ),
-          ),
-          IconButton(
-            onPressed: logout,
-            icon: const Icon(
-              Icons.logout,
-            ),
+            onPressed: () {
+              supabase.auth.signOut();
+            },
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
-      body: postsLoading
+      body: loading
           ? const Center(
-              child:
-                  CircularProgressIndicator(),
+              child: CircularProgressIndicator(),
             )
           : RefreshIndicator(
-              onRefresh: loadPosts,
+              onRefresh: load,
               child: ListView(
+                padding: const EdgeInsets.all(12),
                 physics:
                     const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.only(
-                  top: 12,
-                  bottom: 30,
-                ),
                 children: [
-                  _stories(),
-
-                  const SizedBox(height: 15),
-
-                  _createBox(),
-
-                  const SizedBox(height: 12),
-
+                  Card(
+                    child: ListTile(
+                      leading:
+                          const Icon(Icons.edit),
+                      title: const Text(
+                        'What’s on your mind?',
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                const CreatePostPage(),
+                          ),
+                        ).then((_) => load());
+                      },
+                    ),
+                  ),
                   if (posts.isEmpty)
                     const Padding(
-                      padding:
-                          EdgeInsets.all(40),
+                      padding: EdgeInsets.all(40),
                       child: Center(
                         child: Text(
                           'এখনও কোনো post নেই',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
                         ),
                       ),
-                    )
-                  else
-                    ...posts.map(
-                      _postCard,
                     ),
-                ],
-              ),
-            ),
-    );
-  }
-
-  Widget _stories() {
-    final stories = [
-      ['You', Icons.add],
-      ['Friends', Icons.person],
-      ['Gaming', Icons.gamepad],
-      ['Music', Icons.music_note],
-      ['Travel', Icons.flight],
-    ];
-
-    return SizedBox(
-      height: 105,
-      child: ListView.builder(
-        scrollDirection:
-            Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 16,
-        ),
-        itemCount: stories.length,
-        itemBuilder: (_, index) {
-          return SizedBox(
-            width: 78,
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 31,
-                  backgroundColor:
-                      const Color(0xFF7C4DFF)
-                          .withOpacity(.20),
-                  child: Icon(
-                    stories[index][1]
-                        as IconData,
-                    color: const Color(
-                        0xFF9B6DFF),
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  stories[index][0]
-                      .toString(),
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _createBox() {
-    return Card(
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 12,
-      ),
-      color:
-          const Color(0xFF12151C),
-      child: InkWell(
-        borderRadius:
-            BorderRadius.circular(12),
-        onTap: widget.onCreatePost,
-        child: Padding(
-          padding:
-              const EdgeInsets.all(14),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor:
-                    const Color(
-                        0xFF7C4DFF),
-                child: Text(
-                  currentName
-                          .isNotEmpty
-                      ? currentName[0]
-                          .toUpperCase()
-                      : 'S',
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'What’s on your mind?',
-                  style: TextStyle(
-                    color: Colors.grey,
-                  ),
-                ),
-              ),
-              const Icon(
-                Icons.edit_outlined,
-                color: Color(0xFF9B6DFF),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _postCard(
-    Map<String, dynamic> post,
-  ) {
-    final content =
-        post['content']?.toString() ??
-            '';
-
-    final userId =
-        post['user_id']?.toString();
-
-    final currentUser =
-        supabase.auth.currentUser;
-
-    final isMine =
-        userId != null &&
-        currentUser != null &&
-        userId == currentUser.id;
-
-    final metadata =
-        currentUser?.userMetadata;
-
-    final author = isMine
-    ? ((metadata?['full_name']?.toString().trim().isNotEmpty ?? false)
-        ? metadata!['full_name'].toString()
-        : (currentUser?.email?.split('@').first ?? 'You'))
-    : 'SocialBook User';
-
-    final letter = author.isNotEmpty
-        ? author[0].toUpperCase()
-        : 'S';
-
-    return Card(
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 7,
-      ),
-      color:
-          const Color(0xFF12151C),
-      child: Padding(
-        padding:
-            const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor:
-                      const Color(
-                          0xFF7C4DFF),
-                  child: Text(
-                    letter,
-                    style:
-                        const TextStyle(
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
-                    children: [
-                      Text(
-                        author,
-                        style:
-                            const TextStyle(
-                          fontWeight:
-                              FontWeight.bold,
-                          fontSize: 16,
-                        ),
+                  ...posts.map(
+                    (post) => Card(
+                      margin:
+                          const EdgeInsets.symmetric(
+                        vertical: 7,
                       ),
-                      const SizedBox(
-                        height: 3,
-                      ),
-                      const Text(
-                        'Public post',
-                        style:
-                            TextStyle(
-                          color:
-                              Colors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                PopupMenuButton<String>(
-                  onSelected:
-                      (value) {
-                    if (value ==
-                            'delete' &&
-                        isMine) {
-                      _deletePost(
-                          post['id']);
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    if (isMine)
-                      const PopupMenuItem(
-                        value:
-                            'delete',
-                        child: Row(
+                      child: Padding(
+                        padding:
+                            const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment:
+                              CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons
-                                  .delete_outline,
-                              color: Colors
-                                  .redAccent,
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  child: Text(
+                                    author(post)
+                                            .isEmpty
+                                        ? 'U'
+                                        : author(
+                                                post)[0]
+                                            .toUpperCase(),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    author(post),
+                                    style:
+                                        const TextStyle(
+                                      fontWeight:
+                                          FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ),
+                                if (post['user_id'] ==
+                                    supabase
+                                        .auth
+                                        .currentUser
+                                        ?.id)
+                                  PopupMenuButton<String>(
+                                    onSelected: (value) {
+                                      if (value ==
+                                          'delete') {
+                                        deletePost(
+                                          post['id'],
+                                        );
+                                      }
+                                    },
+                                    itemBuilder: (_) =>
+                                        const [
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child:
+                                            Text('Delete'),
+                                      ),
+                                    ],
+                                  ),
+                              ],
                             ),
-                            SizedBox(
-                              width: 10,
-                            ),
+                            const SizedBox(height: 12),
                             Text(
-                              'Delete',
+                              post['content']
+                                  .toString(),
+                              style:
+                                  const TextStyle(
+                                fontSize: 16,
+                                height: 1.5,
+                              ),
+                            ),
+                            const Divider(),
+                            Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment
+                                      .spaceAround,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () =>
+                                      like(post['id']),
+                                  icon: const Icon(
+                                    Icons
+                                        .favorite_border,
+                                  ),
+                                  label:
+                                      const Text('Like'),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            CommentsPage(
+                                          postId:
+                                              post['id'],
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(
+                                    Icons
+                                        .comment_outlined,
+                                  ),
+                                  label:
+                                      const Text(
+                                    'Comment',
+                                  ),
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons
+                                        .share_outlined,
+                                  ),
+                                  label:
+                                      const Text('Share'),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                  ],
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 15),
-
-            Text(
-              content,
-              style:
-                  const TextStyle(
-                fontSize: 16,
-                height: 1.5,
+                    ),
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 15),
-
-            const Divider(),
-
-            Row(
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceAround,
-              children: [
-                TextButton.icon(
-                  onPressed: () {
-                    showAppMessage(
-                      context,
-                      'Like system পরের ধাপে database-এর সাথে যুক্ত করা হবে ❤️',
-                    );
-                  },
-                  icon: const Icon(
-                    Icons
-                        .favorite_border,
-                  ),
-                  label:
-                      const Text('Like'),
-                ),
-                TextButton.icon(
-                  onPressed:
-                      _showComments,
-                  icon: const Icon(
-                    Icons
-                        .comment_outlined,
-                  ),
-                  label:
-                      const Text(
-                    'Comment',
-                  ),
-                ),
-                TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons
-                        .share_outlined,
-                  ),
-                  label:
-                      const Text('Share'),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _deletePost(
-    dynamic postId,
-  ) async {
-    if (postId == null) return;
-
-    try {
-      await supabase
-          .from('posts')
-          .delete()
-          .eq('id', postId);
-
-      await loadPosts();
-
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Post delete হয়েছে',
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Post delete করা যায়নি',
-        );
-      }
-    }
-  }
-
-  void _showComments() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor:
-          const Color(0xFF12151C),
-      builder: (_) {
-        return Padding(
-          padding:
-              EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom:
-                MediaQuery.of(context)
-                        .viewInsets
-                        .bottom +
-                    20,
-          ),
-          child: SizedBox(
-            height:
-                MediaQuery.of(context)
-                        .size
-                        .height *
-                    .55,
-            child: Column(
-              children: [
-                const Text(
-                  'Comments',
-                  style:
-                      TextStyle(
-                    fontSize: 21,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(
-                    height: 20),
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'No comments yet',
-                      style:
-                          TextStyle(
-                        color:
-                            Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-                TextField(
-                  decoration:
-                      InputDecoration(
-                    hintText:
-                        'Write a comment...',
-                    filled: true,
-                    fillColor:
-                        const Color(
-                            0xFF1A1D25),
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  15),
-                      borderSide:
-                          BorderSide
-                              .none,
-                    ),
-                    suffixIcon:
-                        IconButton(
-                      onPressed: () {
-                        showAppMessage(
-                          context,
-                          'Comment system পরের ধাপে database-এর সাথে যুক্ত করা হবে',
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
@@ -1311,396 +829,274 @@ class CreatePostPage extends StatefulWidget {
 
   @override
   State<CreatePostPage> createState() =>
-      _CreatePostPageState();
+      _CreatePostState();
 }
 
-class _CreatePostPageState
+class _CreatePostState
     extends State<CreatePostPage> {
-  final controller =
-      TextEditingController();
+  final text = TextEditingController();
 
-  bool publishing = false;
+  bool loading = false;
 
-  String get currentName {
-    final user =
-        supabase.auth.currentUser;
+  Future<void> publish() async {
+    final me = supabase.auth.currentUser;
 
-    return user?.userMetadata?[
-                'full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
-        'SocialBook User';
-  }
-
-  Future<void> publishPost() async {
-    final text =
-        controller.text.trim();
-
-    if (text.isEmpty) {
-      showAppMessage(
-        context,
-        'Post লিখুন',
-      );
+    if (me == null) {
+      message(context, 'Login করুন');
       return;
     }
 
-    if (text.length > 5000) {
-      showAppMessage(
-        context,
-        'Post সর্বোচ্চ 5000 অক্ষরের হতে পারে',
-      );
+    final value = text.text.trim();
+
+    if (value.isEmpty) {
+      message(context, 'Post লিখুন');
       return;
     }
 
-    final user =
-        supabase.auth.currentUser;
-
-    if (user == null) {
-      showAppMessage(
-        context,
-        'Post করতে Login করুন',
-      );
-      return;
-    }
-
-    setState(() {
-      publishing = true;
-    });
+    setState(() => loading = true);
 
     try {
-      await supabase
-          .from('posts')
-          .insert({
-        'user_id': user.id,
-        'content': text,
+      await supabase.from('posts').insert({
+        'user_id': me.id,
+        'content': value,
       });
-
-      controller.clear();
 
       if (!mounted) return;
 
-      showAppMessage(
+      message(
         context,
         'Post সফলভাবে প্রকাশ হয়েছে 🎉',
       );
 
       widget.onPublished?.call();
 
-      Navigator.pop(
-        context,
-        true,
-      );
-    } on PostgrestException catch (
-        error) {
+      Navigator.pop(context);
+    } on PostgrestException catch (e) {
       if (mounted) {
-        showAppMessage(
-          context,
-          error.message,
-        );
+        message(context, e.message);
       }
     } catch (_) {
       if (mounted) {
-        showAppMessage(
+        message(
           context,
-          'Post প্রকাশ করতে সমস্যা হয়েছে',
+          'Post প্রকাশ হয়নি',
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          publishing = false;
-        });
+        setState(() => loading = false);
       }
     }
   }
 
   @override
   void dispose() {
-    controller.dispose();
+    text.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final name = currentName;
-
-    final letter = name.isNotEmpty
-        ? name[0].toUpperCase()
-        : 'S';
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Create Post',
-          style:
-              TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        title: const Text('Create Post'),
       ),
-      body: SafeArea(
-        child:
-            SingleChildScrollView(
-          padding:
-              const EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            30,
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          TextField(
+            controller: text,
+            minLines: 8,
+            maxLines: 14,
+            maxLength: 5000,
+            decoration: const InputDecoration(
+              hintText:
+                  'What do you want to share?',
+              border: InputBorder.none,
+            ),
           ),
-          child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
-            children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor:
-                        const Color(
-                            0xFF7C4DFF),
-                    child: Text(
-                      letter,
-                      style:
-                          const TextStyle(
-                        fontSize: 20,
-                        fontWeight:
-                            FontWeight
-                                .bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                      width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(
-                            height: 3),
-                        Text(
-                          'Public post',
-                          style:
-                              TextStyle(
-                            color: Colors
-                                .grey
-                                .shade500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.public,
-                    color: Colors.grey,
-                  ),
-                ],
+          const SizedBox(height: 18),
+          SizedBox(
+            height: 55,
+            child: FilledButton.icon(
+              onPressed:
+                  loading ? null : publish,
+              icon: const Icon(Icons.send),
+              label: Text(
+                loading
+                    ? 'Publishing...'
+                    : 'Publish Post',
               ),
-
-              const SizedBox(
-                  height: 20),
-
-              Container(
-                decoration:
-                    BoxDecoration(
-                  color:
-                      const Color(
-                          0xFF12151C),
-                  borderRadius:
-                      BorderRadius
-                          .circular(18),
-                  border:
-                      Border.all(
-                    color: Colors.white
-                        .withOpacity(.06),
-                  ),
-                ),
-                padding:
-                    const EdgeInsets
-                        .all(16),
-                child: TextField(
-                  controller:
-                      controller,
-                  minLines: 8,
-                  maxLines: 14,
-                  maxLength: 5000,
-                  textCapitalization:
-                      TextCapitalization
-                          .sentences,
-                  decoration:
-                      const InputDecoration(
-                    hintText:
-                        'What do you want to share?',
-                    border:
-                        InputBorder
-                            .none,
-                    counterText: '',
-                  ),
-                  style:
-                      const TextStyle(
-                    fontSize: 17,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-
-              const SizedBox(
-                  height: 15),
-
-              Container(
-                decoration:
-                    BoxDecoration(
-                  color:
-                      const Color(
-                          0xFF12151C),
-                  borderRadius:
-                      BorderRadius
-                          .circular(16),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading:
-                          const Icon(
-                        Icons
-                            .photo_outlined,
-                        color:
-                            Colors.green,
-                      ),
-                      title:
-                          const Text(
-                        'Add Photo',
-                      ),
-                      subtitle:
-                          const Text(
-                        'Photo upload',
-                      ),
-                      onTap:
-                          publishing
-                              ? null
-                              : () {
-                                  showAppMessage(
-                                    context,
-                                    'Photo upload পরের ধাপে যুক্ত করা হবে 📷',
-                                  );
-                                },
-                    ),
-                    const Divider(
-                        height: 1),
-                    ListTile(
-                      leading:
-                          const Icon(
-                        Icons
-                            .videocam_outlined,
-                        color:
-                            Colors.redAccent,
-                      ),
-                      title:
-                          const Text(
-                        'Add Video',
-                      ),
-                      subtitle:
-                          const Text(
-                        'Video upload',
-                      ),
-                      onTap:
-                          publishing
-                              ? null
-                              : () {
-                                  showAppMessage(
-                                    context,
-                                    'Video upload পরের ধাপে যুক্ত করা হবে 🎬',
-                                  );
-                                },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(
-                  height: 20),
-
-              SizedBox(
-                width:
-                    double.infinity,
-                height: 56,
-                child:
-                    FilledButton.icon(
-                  onPressed:
-                      publishing
-                          ? null
-                          : publishPost,
-                  icon: publishing
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth:
-                                2.5,
-                            color:
-                                Colors.white,
-                          ),
-                        )
-                      : const Icon(
-                          Icons
-                              .send_rounded,
-                        ),
-                  label: Text(
-                    publishing
-                        ? 'Publishing...'
-                        : 'Publish Post',
-                    style:
-                        const TextStyle(
-                      fontSize: 16,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(
-                  height: 10),
-
-              Center(
-                child: Text(
-                  'Your post will be saved securely to SocialBook.',
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      TextStyle(
-                    color: Colors
-                        .grey
-                        .shade600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
-        ),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// COMMENTS
+// ============================================================
+
+class CommentsPage extends StatefulWidget {
+  final dynamic postId;
+
+  const CommentsPage({
+    super.key,
+    required this.postId,
+  });
+
+  @override
+  State<CommentsPage> createState() =>
+      _CommentsState();
+}
+
+class _CommentsState
+    extends State<CommentsPage> {
+  final text = TextEditingController();
+
+  List<Map<String, dynamic>> comments = [];
+
+  bool loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    try {
+      final data = await supabase
+          .from('comments')
+          .select(
+            'id,user_id,content,created_at,profiles(full_name,username)',
+          )
+          .eq('post_id', widget.postId)
+          .order('created_at');
+
+      if (mounted) {
+        setState(() {
+          comments =
+              List<Map<String, dynamic>>.from(
+            data,
+          );
+          loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => loading = false);
+        message(
+          context,
+          'Comments load হয়নি: $e',
+        );
+      }
+    }
+  }
+
+  Future<void> send() async {
+    final me = supabase.auth.currentUser;
+    final value = text.text.trim();
+
+    if (me == null || value.isEmpty) return;
+
+    try {
+      await supabase.from('comments').insert({
+        'post_id': widget.postId,
+        'user_id': me.id,
+        'content': value,
+      });
+
+      text.clear();
+
+      await load();
+    } catch (e) {
+      if (mounted) {
+        message(
+          context,
+          'Comment করা যায়নি: $e',
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    text.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Comments'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: loading
+                ? const Center(
+                    child:
+                        CircularProgressIndicator(),
+                  )
+                : ListView(
+                    children: comments.map((item) {
+                      final profile =
+                          item['profiles'];
+
+                      final name =
+                          profile is Map
+                              ? (
+                                  profile['full_name'] ??
+                                  profile['username'] ??
+                                  'User'
+                                ).toString()
+                              : 'User';
+
+                      return ListTile(
+                        leading: CircleAvatar(
+                          child: Text(
+                            name.isEmpty
+                                ? 'U'
+                                : name[0]
+                                    .toUpperCase(),
+                          ),
+                        ),
+                        title: Text(name),
+                        subtitle: Text(
+                          item['content']
+                              .toString(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: text,
+                    decoration:
+                        const InputDecoration(
+                      hintText:
+                          'Write a comment...',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: send,
+                  icon:
+                      const Icon(Icons.send),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1710,52 +1106,121 @@ class _CreatePostPageState
 // SEARCH
 // ============================================================
 
-class SearchPage
-    extends StatelessWidget {
+class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
+
+  @override
+  State<SearchPage> createState() =>
+      _SearchState();
+}
+
+class _SearchState
+    extends State<SearchPage> {
+  final q = TextEditingController();
+
+  List<Map<String, dynamic>> users = [];
+
+  bool loading = false;
+
+  Future<void> search() async {
+    final value = q.text.trim();
+
+    if (value.isEmpty) return;
+
+    setState(() => loading = true);
+
+    try {
+      final data = await supabase
+          .from('profiles')
+          .select(
+            'id,full_name,username',
+          )
+          .or(
+            'full_name.ilike.%$value%,username.ilike.%$value%',
+          )
+          .limit(30);
+
+      if (mounted) {
+        setState(() {
+          users =
+              List<Map<String, dynamic>>.from(
+            data,
+          );
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        message(
+          context,
+          'Search হয়নি: $e',
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => loading = false);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    q.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Search',
-          style: TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        title: const Text('Search'),
       ),
       body: Padding(
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
-              decoration:
-                  inputDecoration(
-                'Search people, posts...',
+              controller: q,
+              onSubmitted: (_) => search(),
+              decoration: field(
+                'Search people...',
                 Icons.search,
+              ).copyWith(
+                suffixIcon: IconButton(
+                  onPressed: search,
+                  icon:
+                      const Icon(Icons.search),
+                ),
               ),
             ),
-            const SizedBox(
-                height: 40),
-            Icon(
-              Icons.search,
-              size: 80,
-              color:
-                  Colors.grey.shade700,
-            ),
-            const SizedBox(
-                height: 10),
-            Text(
-              'Search SocialBook',
-              style: TextStyle(
-                color:
-                    Colors.grey.shade500,
-                fontSize: 18,
+            const SizedBox(height: 15),
+            if (loading)
+              const CircularProgressIndicator()
+            else
+              Expanded(
+                child: ListView(
+                  children: users.map((user) {
+                    final name =
+                        (user['full_name'] ??
+                                'User')
+                            .toString();
+
+                    return ListTile(
+                      leading: CircleAvatar(
+                        child: Text(
+                          name.isEmpty
+                              ? 'U'
+                              : name[0]
+                                  .toUpperCase(),
+                        ),
+                      ),
+                      title: Text(name),
+                      subtitle: Text(
+                        '@${user['username'] ?? ''}',
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ),
           ],
         ),
       ),
@@ -1769,58 +1234,16 @@ class SearchPage
 
 class NotificationsPage
     extends StatelessWidget {
-  const NotificationsPage({
-    super.key,
-  });
+  const NotificationsPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    const notifications = [
-      'Welcome to SocialBook 🎉',
-      'Your account is connected.',
-      'Create your first post.',
-      'Discover people and communities.',
-    ];
-
-    return Scaffold(
+    return const Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        title: Text('Notifications'),
       ),
-      body: ListView.builder(
-        padding:
-            const EdgeInsets.all(12),
-        itemCount:
-            notifications.length,
-        itemBuilder: (_, index) {
-          return Card(
-            color:
-                const Color(0xFF12151C),
-            child: ListTile(
-              leading:
-                  const CircleAvatar(
-                backgroundColor:
-                    Color(0xFF7C4DFF),
-                child: Icon(
-                  Icons
-                      .notifications,
-                ),
-              ),
-              title: Text(
-                notifications[index],
-              ),
-              subtitle:
-                  const Text(
-                'Just now',
-              ),
-            ),
-          );
-        },
+      body: Center(
+        child: Text('Notifications'),
       ),
     );
   }
@@ -1830,278 +1253,77 @@ class NotificationsPage
 // PROFILE
 // ============================================================
 
-class ProfilePage
-    extends StatelessWidget {
+class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
-
-  String get name {
-    final user =
-        supabase.auth.currentUser;
-
-    return user?.userMetadata?[
-                'full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
-        'SocialBook User';
-  }
-
-  String get email {
-    return supabase.auth.currentUser
-            ?.email ??
-        '';
-  }
-
-  Future<void> logout(
-    BuildContext context,
-  ) async {
-    await supabase.auth.signOut();
-
-    if (!context.mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            const LoginPage(),
-      ),
-      (_) => false,
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
-    final letter = name.isNotEmpty
-        ? name[0].toUpperCase()
-        : 'S';
+    final user =
+        supabase.auth.currentUser;
+
+    final name = (
+      user?.userMetadata?['full_name'] ??
+      user?.email?.split('@').first ??
+      'User'
+    ).toString();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Profile',
-          style: TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
+        title: const Text('Profile'),
       ),
       body: ListView(
-        padding:
-            const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(20),
         children: [
-          const SizedBox(
-              height: 20),
-
-          Center(
+          const SizedBox(height: 20),
+          const Center(
             child: CircleAvatar(
               radius: 60,
               backgroundColor:
-                  const Color(
-                      0xFF7C4DFF),
-              child: Text(
-                letter,
-                style:
-                    const TextStyle(
-                  fontSize: 44,
-                  fontWeight:
-                      FontWeight.bold,
-                ),
+                  Color(0xFF7C4DFF),
+              child: Icon(
+                Icons.person,
+                size: 60,
               ),
             ),
           ),
-
-          const SizedBox(
-              height: 18),
-
+          const SizedBox(height: 15),
           Center(
             child: Text(
               name,
-              style:
-                  const TextStyle(
+              style: const TextStyle(
                 fontSize: 26,
-                fontWeight:
-                    FontWeight.bold,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
-
-          const SizedBox(
-              height: 7),
-
           Center(
             child: Text(
-              email,
-              style: TextStyle(
-                color: Colors
-                    .grey
-                    .shade500,
-              ),
-            ),
-          ),
-
-          const SizedBox(
-              height: 30),
-
-          Row(
-            mainAxisAlignment:
-                MainAxisAlignment
-                    .spaceEvenly,
-            children: const [
-              ProfileStat(
-                title: 'Posts',
-                value: '0',
-              ),
-              ProfileStat(
-                title: 'Friends',
-                value: '0',
-              ),
-              ProfileStat(
-                title: 'Following',
-                value: '0',
-              ),
-            ],
-          ),
-
-          const SizedBox(
-              height: 30),
-
-          Card(
-            color:
-                const Color(
-                    0xFF12151C),
-            child: Column(
-              children: [
-                ListTile(
-                  leading:
-                      const Icon(
-                    Icons
-                        .person_outline,
-                  ),
-                  title:
-                      const Text(
-                    'Edit Profile',
-                  ),
-                  trailing:
-                      const Icon(
-                    Icons
-                        .chevron_right,
-                  ),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading:
-                      const Icon(
-                    Icons
-                        .bookmark_outline,
-                  ),
-                  title:
-                      const Text(
-                    'Saved Posts',
-                  ),
-                  trailing:
-                      const Icon(
-                    Icons
-                        .chevron_right,
-                  ),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading:
-                      const Icon(
-                    Icons
-                        .settings_outlined,
-                  ),
-                  title:
-                      const Text(
-                    'Settings',
-                  ),
-                  trailing:
-                      const Icon(
-                    Icons
-                        .chevron_right,
-                  ),
-                  onTap: () {},
-                ),
-                ListTile(
-                  leading:
-                      const Icon(
-                    Icons.logout,
-                    color:
-                        Colors.redAccent,
-                  ),
-                  title:
-                      const Text(
-                    'Logout',
-                    style:
-                        TextStyle(
-                      color:
-                          Colors.redAccent,
-                    ),
-                  ),
-                  onTap: () =>
-                      logout(context),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(
-              height: 30),
-
-          const Center(
-            child: Text(
-              'Creator: Omor Faruk',
-              style: TextStyle(
+              user?.email ?? '',
+              style: const TextStyle(
                 color: Colors.grey,
-                fontSize: 12,
               ),
+            ),
+          ),
+          const SizedBox(height: 30),
+          Card(
+            child: ListTile(
+              leading: const Icon(
+                Icons.logout,
+                color: Colors.redAccent,
+              ),
+              title: const Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.redAccent,
+                ),
+              ),
+              onTap: () {
+                supabase.auth.signOut();
+              },
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-// ============================================================
-// PROFILE STAT
-// ============================================================
-
-class ProfileStat
-    extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const ProfileStat({
-    super.key,
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style:
-              const TextStyle(
-            fontSize: 22,
-            fontWeight:
-                FontWeight.bold,
-          ),
-        ),
-        const SizedBox(
-            height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            color:
-                Colors.grey.shade500,
-          ),
-        ),
-      ],
     );
   }
 }
