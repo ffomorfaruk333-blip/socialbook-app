@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-const String supabaseUrl =
-    'https://xsxrcrbcxckicskwppmb.supabase.co';
-
-const String supabasePublishableKey =
+const supabaseUrl = 'https://xsxrcrbcxckicskwppmb.supabase.co';
+const supabasePublishableKey =
     'sb_publishable_0xGXFjbz404LyFWwWo6kzw_wHUgY0NT';
+
+final supabase = Supabase.instance.client;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,8 +17,6 @@ Future<void> main() async {
 
   runApp(const SocialBookApp());
 }
-
-final supabase = Supabase.instance.client;
 
 class SocialBookApp extends StatelessWidget {
   const SocialBookApp({super.key});
@@ -46,42 +44,29 @@ class SocialBookApp extends StatelessWidget {
 // AUTH GATE
 // ============================================================
 
-class AuthGate extends StatefulWidget {
+class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
   @override
-  State<AuthGate> createState() => _AuthGateState();
-}
-
-class _AuthGateState extends State<AuthGate> {
-  @override
-  void initState() {
-    super.initState();
-
-    supabase.auth.onAuthStateChange.listen((data) {
-      if (mounted) {
-        setState(() {});
-      }
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final session = supabase.auth.currentSession;
+    return StreamBuilder<AuthState>(
+      stream: supabase.auth.onAuthStateChange,
+      builder: (context, snapshot) {
+        if (supabase.auth.currentSession != null) {
+          return const MainNavigation();
+        }
 
-    if (session != null) {
-      return const MainNavigation();
-    }
-
-    return const LoginPage();
+        return const LoginPage();
+      },
+    );
   }
 }
 
 // ============================================================
-// COMMON UI
+// HELPERS
 // ============================================================
 
-InputDecoration inputDecoration(
+InputDecoration decoration(
   String hint,
   IconData icon,
 ) {
@@ -108,15 +93,15 @@ InputDecoration inputDecoration(
   );
 }
 
-void showAppMessage(
+void message(
   BuildContext context,
-  String message,
+  String text,
 ) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(text),
         behavior: SnackBarBehavior.floating,
       ),
     );
@@ -134,21 +119,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
 
   bool loading = false;
   bool hidden = true;
 
   Future<void> login() async {
-    final email = emailController.text.trim();
-    final password = passwordController.text;
+    final e = email.text.trim();
+    final p = password.text;
 
-    if (email.isEmpty || password.isEmpty) {
-      showAppMessage(
-        context,
-        'Email এবং Password দিন',
-      );
+    if (e.isEmpty || p.isEmpty) {
+      message(context, 'Email এবং Password দিন');
       return;
     }
 
@@ -156,31 +138,22 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await supabase.auth.signInWithPassword(
-        email: email,
-        password: password,
+        email: e,
+        password: p,
       );
-    } on AuthException catch (error) {
-      if (mounted) {
-        showAppMessage(context, error.message);
-      }
-    } catch (_) {
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Login করতে সমস্যা হয়েছে',
-        );
-      }
+    } on AuthException catch (e) {
+      if (mounted) message(context, e.message);
+    } catch (e) {
+      if (mounted) message(context, 'Login করা যায়নি');
     } finally {
-      if (mounted) {
-        setState(() => loading = false);
-      }
+      if (mounted) setState(() => loading = false);
     }
   }
 
   @override
   void dispose() {
-    emailController.dispose();
-    passwordController.dispose();
+    email.dispose();
+    password.dispose();
     super.dispose();
   }
 
@@ -193,8 +166,6 @@ class _LoginPageState extends State<LoginPage> {
             padding: const EdgeInsets.all(24),
             child: Column(
               children: [
-                const SizedBox(height: 30),
-
                 Container(
                   width: 100,
                   height: 100,
@@ -205,18 +176,14 @@ class _LoginPageState extends State<LoginPage> {
                         Color(0xFFB388FF),
                       ],
                     ),
-                    borderRadius:
-                        BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(30),
                   ),
                   child: const Icon(
                     Icons.people_alt_rounded,
                     size: 55,
-                    color: Colors.white,
                   ),
                 ),
-
                 const SizedBox(height: 24),
-
                 const Text(
                   'SocialBook',
                   style: TextStyle(
@@ -224,42 +191,32 @@ class _LoginPageState extends State<LoginPage> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-
                 const SizedBox(height: 8),
-
                 Text(
                   'Connect. Share. Discover.',
                   style: TextStyle(
                     color: Colors.grey.shade400,
                   ),
                 ),
-
                 const SizedBox(height: 40),
-
                 TextField(
-                  controller: emailController,
-                  keyboardType:
-                      TextInputType.emailAddress,
-                  decoration: inputDecoration(
+                  controller: email,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: decoration(
                     'Email',
                     Icons.email_outlined,
                   ),
                 ),
-
                 const SizedBox(height: 15),
-
                 TextField(
-                  controller: passwordController,
+                  controller: password,
                   obscureText: hidden,
                   decoration: InputDecoration(
                     hintText: 'Password',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline),
+                    prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
                       onPressed: () {
-                        setState(
-                          () => hidden = !hidden,
-                        );
+                        setState(() => hidden = !hidden);
                       },
                       icon: Icon(
                         hidden
@@ -268,30 +225,24 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     filled: true,
-                    fillColor:
-                        const Color(0xFF151820),
+                    fillColor: const Color(0xFF151820),
                     border: OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
                     ),
                   ),
                 ),
-
                 const SizedBox(height: 22),
-
                 SizedBox(
                   width: double.infinity,
                   height: 55,
                   child: FilledButton(
-                    onPressed:
-                        loading ? null : login,
+                    onPressed: loading ? null : login,
                     child: loading
                         ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child:
-                                CircularProgressIndicator(
+                            width: 23,
+                            height: 23,
+                            child: CircularProgressIndicator(
                               strokeWidth: 2,
                             ),
                           )
@@ -299,28 +250,22 @@ class _LoginPageState extends State<LoginPage> {
                             'Login',
                             style: TextStyle(
                               fontSize: 17,
-                              fontWeight:
-                                  FontWeight.bold,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                   ),
                 ),
-
                 const SizedBox(height: 10),
-
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) =>
-                            const SignUpPage(),
+                        builder: (_) => const SignUpPage(),
                       ),
                     );
                   },
-                  child: const Text(
-                    'Create a new account',
-                  ),
+                  child: const Text('Create a new account'),
                 ),
               ],
             ),
@@ -339,66 +284,48 @@ class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  State<SignUpPage> createState() =>
-      _SignUpPageState();
+  State<SignUpPage> createState() => _SignUpPageState();
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  final nameController = TextEditingController();
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
-  final confirmController = TextEditingController();
+  final name = TextEditingController();
+  final email = TextEditingController();
+  final password = TextEditingController();
+  final confirm = TextEditingController();
 
   bool loading = false;
-  bool hiddenPassword = true;
-  bool hiddenConfirm = true;
+  bool hide1 = true;
+  bool hide2 = true;
 
-  Future<void> signUp() async {
-    final name =
-        nameController.text.trim();
-    final email =
-        emailController.text.trim();
-    final password =
-        passwordController.text;
-    final confirm =
-        confirmController.text;
+  Future<void> signup() async {
+    final n = name.text.trim();
+    final e = email.text.trim();
+    final p = password.text;
+    final c = confirm.text;
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.isEmpty ||
-        confirm.isEmpty) {
-      showAppMessage(
-        context,
-        'সবগুলো তথ্য পূরণ করুন',
-      );
+    if (n.isEmpty || e.isEmpty || p.isEmpty || c.isEmpty) {
+      message(context, 'সব তথ্য পূরণ করুন');
       return;
     }
 
-    if (password.length < 6) {
-      showAppMessage(
-        context,
-        'Password কমপক্ষে ৬ অক্ষরের হতে হবে',
-      );
+    if (p.length < 6) {
+      message(context, 'Password কমপক্ষে ৬ অক্ষরের হতে হবে');
       return;
     }
 
-    if (password != confirm) {
-      showAppMessage(
-        context,
-        'Password মিলছে না',
-      );
+    if (p != c) {
+      message(context, 'Password মিলছে না');
       return;
     }
 
     setState(() => loading = true);
 
     try {
-      final result =
-          await supabase.auth.signUp(
-        email: email,
-        password: password,
+      final result = await supabase.auth.signUp(
+        email: e,
+        password: p,
         data: {
-          'full_name': name,
+          'full_name': n,
         },
       );
 
@@ -408,70 +335,50 @@ class _SignUpPageState extends State<SignUpPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                const MainNavigation(),
+            builder: (_) => const MainNavigation(),
           ),
           (_) => false,
         );
       } else {
-        showAppMessage(
+        message(
           context,
           'Account তৈরি হয়েছে। Email confirmation করুন।',
         );
-
         Navigator.pop(context);
       }
-    } on AuthException catch (error) {
-      if (mounted) {
-        showAppMessage(
-          context,
-          error.message,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Sign Up করতে সমস্যা হয়েছে',
-        );
-      }
+    } on AuthException catch (e) {
+      if (mounted) message(context, e.message);
+    } catch (e) {
+      if (mounted) message(context, 'Signup করা যায়নি');
     } finally {
-      if (mounted) {
-        setState(() => loading = false);
-      }
+      if (mounted) setState(() => loading = false);
     }
   }
 
   @override
   void dispose() {
-    nameController.dispose();
-    emailController.dispose();
-    passwordController.dispose();
-    confirmController.dispose();
+    name.dispose();
+    email.dispose();
+    password.dispose();
+    confirm.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Create Account'),
-      ),
+      appBar: AppBar(title: const Text('Create Account')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              const SizedBox(height: 15),
-
               const Icon(
                 Icons.person_add_alt_1_rounded,
                 size: 80,
                 color: Color(0xFF8B5CF6),
               ),
-
               const SizedBox(height: 18),
-
               const Text(
                 'Create Your Account',
                 style: TextStyle(
@@ -479,105 +386,79 @@ class _SignUpPageState extends State<SignUpPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-
               const SizedBox(height: 30),
-
               TextField(
-                controller: nameController,
-                textCapitalization:
-                    TextCapitalization.words,
-                decoration: inputDecoration(
+                controller: name,
+                decoration: decoration(
                   'Full Name',
                   Icons.person_outline,
                 ),
               ),
-
               const SizedBox(height: 15),
-
               TextField(
-                controller: emailController,
-                keyboardType:
-                    TextInputType.emailAddress,
-                decoration: inputDecoration(
+                controller: email,
+                keyboardType: TextInputType.emailAddress,
+                decoration: decoration(
                   'Email',
                   Icons.email_outlined,
                 ),
               ),
-
               const SizedBox(height: 15),
-
               TextField(
-                controller: passwordController,
-                obscureText: hiddenPassword,
+                controller: password,
+                obscureText: hide1,
                 decoration: InputDecoration(
                   hintText: 'Password',
-                  prefixIcon:
-                      const Icon(Icons.lock_outline),
+                  prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(
-                        () => hiddenPassword =
-                            !hiddenPassword,
-                      );
+                      setState(() => hide1 = !hide1);
                     },
                     icon: Icon(
-                      hiddenPassword
+                      hide1
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                     ),
                   ),
                   filled: true,
-                  fillColor:
-                      const Color(0xFF151820),
+                  fillColor: const Color(0xFF151820),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-
               const SizedBox(height: 15),
-
               TextField(
-                controller: confirmController,
-                obscureText: hiddenConfirm,
+                controller: confirm,
+                obscureText: hide2,
                 decoration: InputDecoration(
                   hintText: 'Confirm Password',
-                  prefixIcon:
-                      const Icon(Icons.lock_reset),
+                  prefixIcon: const Icon(Icons.lock_reset),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(
-                        () => hiddenConfirm =
-                            !hiddenConfirm,
-                      );
+                      setState(() => hide2 = !hide2);
                     },
                     icon: Icon(
-                      hiddenConfirm
+                      hide2
                           ? Icons.visibility_outlined
                           : Icons.visibility_off_outlined,
                     ),
                   ),
                   filled: true,
-                  fillColor:
-                      const Color(0xFF151820),
+                  fillColor: const Color(0xFF151820),
                   border: OutlineInputBorder(
-                    borderRadius:
-                        BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-
               const SizedBox(height: 22),
-
               SizedBox(
                 width: double.infinity,
                 height: 55,
                 child: FilledButton(
-                  onPressed:
-                      loading ? null : signUp,
+                  onPressed: loading ? null : signup,
                   child: loading
                       ? const CircularProgressIndicator(
                           strokeWidth: 2,
@@ -586,21 +467,14 @@ class _SignUpPageState extends State<SignUpPage> {
                           'Sign Up',
                           style: TextStyle(
                             fontSize: 17,
-                            fontWeight:
-                                FontWeight.bold,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                 ),
               ),
-
-              const SizedBox(height: 10),
-
               TextButton(
-                onPressed: () =>
-                    Navigator.pop(context),
-                child: const Text(
-                  'Already have an account? Login',
-                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Already have an account? Login'),
               ),
             ],
           ),
@@ -618,39 +492,36 @@ class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() =>
-      _MainNavigationState();
+  State<MainNavigation> createState() => _MainNavigationState();
 }
 
-class _MainNavigationState
-    extends State<MainNavigation> {
-  int currentIndex = 0;
+class _MainNavigationState extends State<MainNavigation> {
+  int index = 0;
+
+  Future<void> openCreatePost() async {
+    final result = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const CreatePostPage(),
+      ),
+    );
+
+    if (result == true && mounted) {
+      setState(() {});
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final pages = [
       HomePage(
-        onCreatePost: () async {
-          final result =
-              await Navigator.push<bool>(
-            context,
-            MaterialPageRoute(
-              builder: (_) =>
-                  const CreatePostPage(),
-            ),
-          );
-
-          if (result == true && mounted) {
-            setState(() {});
-          }
-        },
+        onRefresh: () => setState(() {}),
+        onCreatePost: openCreatePost,
       ),
       const SearchPage(),
       CreatePostPage(
         onPublished: () {
-          setState(() {
-            currentIndex = 0;
-          });
+          setState(() => index = 0);
         },
       ),
       const NotificationsPage(),
@@ -659,23 +530,18 @@ class _MainNavigationState
 
     return Scaffold(
       body: IndexedStack(
-        index: currentIndex,
+        index: index,
         children: pages,
       ),
-      bottomNavigationBar:
-          NavigationBar(
-        selectedIndex: currentIndex,
-        onDestinationSelected: (index) {
-          setState(() {
-            currentIndex = index;
-          });
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        onDestinationSelected: (i) {
+          setState(() => index = i);
         },
         destinations: const [
           NavigationDestination(
-            icon:
-                Icon(Icons.home_outlined),
-            selectedIcon:
-                Icon(Icons.home),
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
             label: 'Home',
           ),
           NavigationDestination(
@@ -683,65 +549,47 @@ class _MainNavigationState
             label: 'Search',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.add_box_outlined),
-            selectedIcon:
-                Icon(Icons.add_box),
+            icon: Icon(Icons.add_box_outlined),
+            selectedIcon: Icon(Icons.add_box),
             label: 'Create',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.notifications_outlined),
-            selectedIcon:
-                Icon(Icons.notifications),
+            icon: Icon(Icons.notifications_outlined),
+            selectedIcon: Icon(Icons.notifications),
             label: 'Alerts',
           ),
           NavigationDestination(
-            icon:
-                Icon(Icons.person_outline),
-            selectedIcon:
-                Icon(Icons.person),
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
       ),
     );
   }
-}// ============================================================
+}
+
+// ============================================================
 // HOME
 // ============================================================
 
 class HomePage extends StatefulWidget {
-  final Future<void> Function()? onCreatePost;
+  final VoidCallback? onRefresh;
+  final VoidCallback? onCreatePost;
 
   const HomePage({
     super.key,
+    this.onRefresh,
     this.onCreatePost,
   });
 
   @override
-  State<HomePage> createState() =>
-      _HomePageState();
+  State<HomePage> createState() => _HomePageState();
 }
 
-class _HomePageState
-    extends State<HomePage> {
+class _HomePageState extends State<HomePage> {
+  bool loading = true;
   List<Map<String, dynamic>> posts = [];
-
-  bool postsLoading = true;
-
-  String get currentName {
-    final user =
-        supabase.auth.currentUser;
-
-    return user
-            ?.userMetadata?['full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
-        'SocialBook User';
-  }
 
   @override
   void initState() {
@@ -750,43 +598,34 @@ class _HomePageState
   }
 
   Future<void> loadPosts() async {
-    if (mounted) {
-      setState(() {
-        postsLoading = true;
-      });
-    }
+    setState(() => loading = true);
 
     try {
       final data = await supabase
           .from('posts')
           .select()
-          .order(
-            'created_at',
-            ascending: false,
-          );
+          .order('created_at', ascending: false);
 
       if (!mounted) return;
 
       setState(() {
-        posts = List<
-            Map<String, dynamic>>.from(
-          data,
-        );
+        posts = List<Map<String, dynamic>>.from(data);
       });
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        showAppMessage(
-          context,
-          'Posts load করতে সমস্যা হয়েছে',
-        );
+        message(context, 'Post load করা যায়নি: $e');
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          postsLoading = false;
-        });
-      }
+      if (mounted) setState(() => loading = false);
     }
+  }
+
+  String get currentName {
+    final user = supabase.auth.currentUser;
+
+    return user?.userMetadata?['full_name']?.toString() ??
+        user?.email?.split('@').first ??
+        'User';
   }
 
   Future<void> logout() async {
@@ -797,11 +636,32 @@ class _HomePageState
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
-        builder: (_) =>
-            const LoginPage(),
+        builder: (_) => const LoginPage(),
       ),
       (_) => false,
     );
+  }
+
+  Future<void> deletePost(dynamic id) async {
+    final user = supabase.auth.currentUser;
+
+    if (user == null || id == null) return;
+
+    try {
+      await supabase
+          .from('posts')
+          .delete()
+          .eq('id', id)
+          .eq('user_id', user.id);
+
+      await loadPosts();
+
+      if (mounted) {
+        message(context, 'Post delete হয়েছে');
+      }
+    } catch (e) {
+      if (mounted) message(context, 'Delete করা যায়নি: $e');
+    }
   }
 
   @override
@@ -811,56 +671,42 @@ class _HomePageState
         title: const Text(
           'SocialBook',
           style: TextStyle(
-            fontSize: 24,
             fontWeight: FontWeight.bold,
+            fontSize: 24,
           ),
         ),
         actions: [
           IconButton(
-            onPressed: () {},
-            icon: const Icon(
-              Icons.chat_bubble_outline,
-            ),
+            onPressed: widget.onCreatePost,
+            icon: const Icon(Icons.add_box_outlined),
           ),
           IconButton(
             onPressed: logout,
-            icon: const Icon(
-              Icons.logout,
-            ),
+            icon: const Icon(Icons.logout),
           ),
         ],
       ),
-      body: postsLoading
-          ? const Center(
-              child:
-                  CircularProgressIndicator(),
-            )
-          : RefreshIndicator(
-              onRefresh: loadPosts,
-              child: ListView(
-                physics:
-                    const AlwaysScrollableScrollPhysics(),
-                padding:
-                    const EdgeInsets.only(
+      body: RefreshIndicator(
+        onRefresh: loadPosts,
+        child: loading
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.only(
                   top: 12,
                   bottom: 30,
                 ),
                 children: [
-                  _stories(),
-
-                  const SizedBox(height: 15),
-
-                  _createBox(),
-
+                  createPostBox(),
                   const SizedBox(height: 12),
-
                   if (posts.isEmpty)
                     const Padding(
-                      padding:
-                          EdgeInsets.all(40),
+                      padding: EdgeInsets.all(40),
                       child: Center(
                         child: Text(
-                          'এখনও কোনো post নেই',
+                          'এখনও কোনো Post নেই',
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 16,
@@ -870,105 +716,38 @@ class _HomePageState
                     )
                   else
                     ...posts.map(
-                      _postCard,
+                      (post) => postCard(post),
                     ),
                 ],
               ),
-            ),
-    );
-  }
-
-  Widget _stories() {
-    final stories = [
-      ['You', Icons.add],
-      ['Friends', Icons.person],
-      ['Gaming', Icons.gamepad],
-      ['Music', Icons.music_note],
-      ['Travel', Icons.flight],
-    ];
-
-    return SizedBox(
-      height: 105,
-      child: ListView.builder(
-        scrollDirection:
-            Axis.horizontal,
-        padding:
-            const EdgeInsets.symmetric(
-          horizontal: 16,
-        ),
-        itemCount: stories.length,
-        itemBuilder: (_, index) {
-          return SizedBox(
-            width: 78,
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 31,
-                  backgroundColor:
-                      const Color(0xFF7C4DFF)
-                          .withOpacity(.20),
-                  child: Icon(
-                    stories[index][1]
-                        as IconData,
-                    color: const Color(
-                        0xFF9B6DFF),
-                  ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  stories[index][0]
-                      .toString(),
-                  overflow:
-                      TextOverflow.ellipsis,
-                  style:
-                      const TextStyle(
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
       ),
     );
   }
 
-  Widget _createBox() {
+  Widget createPostBox() {
+    final letter = currentName.isNotEmpty
+        ? currentName[0].toUpperCase()
+        : 'U';
+
     return Card(
-      margin:
-          const EdgeInsets.symmetric(
-        horizontal: 12,
-      ),
-      color:
-          const Color(0xFF12151C),
+      margin: const EdgeInsets.symmetric(horizontal: 12),
+      color: const Color(0xFF12151C),
       child: InkWell(
-        borderRadius:
-            BorderRadius.circular(12),
         onTap: widget.onCreatePost,
+        borderRadius: BorderRadius.circular(14),
         child: Padding(
-          padding:
-              const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(15),
           child: Row(
             children: [
               CircleAvatar(
-                backgroundColor:
-                    const Color(
-                        0xFF7C4DFF),
-                child: Text(
-                  currentName
-                          .isNotEmpty
-                      ? currentName[0]
-                          .toUpperCase()
-                      : 'S',
-                ),
+                backgroundColor: const Color(0xFF7C4DFF),
+                child: Text(letter),
               ),
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'What’s on your mind?',
-                  style: TextStyle(
-                    color: Colors.grey,
-                  ),
+                  "What's on your mind?",
+                  style: TextStyle(color: Colors.grey),
                 ),
               ),
               const Icon(
@@ -982,197 +761,117 @@ class _HomePageState
     );
   }
 
-  Widget _postCard(
-    Map<String, dynamic> post,
-  ) {
-    final content =
-        post['content']?.toString() ??
-            '';
+  Widget postCard(Map<String, dynamic> post) {
+    final user = supabase.auth.currentUser;
 
-    final userId =
-        post['user_id']?.toString();
+    final ownerId = post['user_id']?.toString();
+    final mine = user != null && ownerId == user.id;
 
-    final currentUser =
-        supabase.auth.currentUser;
+    final content = post['content']?.toString() ?? '';
 
-    final isMine =
-        userId != null &&
-        currentUser != null &&
-        userId == currentUser.id;
+    String author = 'SocialBook User';
 
-    final metadata =
-        currentUser?.userMetadata;
+    if (mine) {
+      author = user?.userMetadata?['full_name']?.toString() ??
+          user?.email?.split('@').first ??
+          'You';
+    }
 
-    final author = isMine
-        ? ((metadata?['full_name']
-                    ?.toString()
-                    .trim()
-                    .isNotEmpty ??
-                false)
-            ? metadata!['full_name']
-                .toString()
-            : (currentUser?.email
-                    ?.split('@')
-                    .first ??
-                'You'))
-        : 'SocialBook User';
-
-    final letter = author.isNotEmpty
-        ? author[0].toUpperCase()
-        : 'S';
+    final letter =
+        author.isNotEmpty ? author[0].toUpperCase() : 'U';
 
     return Card(
-      margin:
-          const EdgeInsets.symmetric(
+      margin: const EdgeInsets.symmetric(
         horizontal: 12,
         vertical: 7,
       ),
-      color:
-          const Color(0xFF12151C),
+      color: const Color(0xFF12151C),
       child: Padding(
-        padding:
-            const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment:
-              CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor:
-                      const Color(
-                          0xFF7C4DFF),
-                  child: Text(
-                    letter,
-                    style:
-                        const TextStyle(
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
+                  backgroundColor: const Color(0xFF7C4DFF),
+                  child: Text(letter),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
-                    crossAxisAlignment:
-                        CrossAxisAlignment
-                            .start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         author,
-                        style:
-                            const TextStyle(
-                          fontWeight:
-                              FontWeight.bold,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
                       ),
-                      const SizedBox(
-                        height: 3,
-                      ),
+                      const SizedBox(height: 3),
                       const Text(
                         'Public post',
-                        style:
-                            TextStyle(
-                          color:
-                              Colors.grey,
+                        style: TextStyle(
+                          color: Colors.grey,
                           fontSize: 12,
                         ),
                       ),
                     ],
                   ),
                 ),
-                PopupMenuButton<String>(
-                  onSelected:
-                      (value) {
-                    if (value ==
-                            'delete' &&
-                        isMine) {
-                      _deletePost(
-                          post['id']);
-                    }
-                  },
-                  itemBuilder: (_) => [
-                    if (isMine)
-                      const PopupMenuItem(
-                        value:
-                            'delete',
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons
-                                  .delete_outline,
-                              color: Colors
-                                  .redAccent,
-                            ),
-                            SizedBox(
-                              width: 10,
-                            ),
-                            Text(
-                              'Delete',
-                            ),
-                          ],
-                        ),
+                if (mine)
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        deletePost(post['id']);
+                      }
+                    },
+                    itemBuilder: (_) => const [
+                      PopupMenuItem(
+                        value: 'delete',
+                        child: Text('Delete'),
                       ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
-
             const SizedBox(height: 15),
-
             Text(
               content,
-              style:
-                  const TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 height: 1.5,
               ),
             ),
-
             const SizedBox(height: 15),
-
             const Divider(),
-
             Row(
-              mainAxisAlignment:
-                  MainAxisAlignment
-                      .spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 TextButton.icon(
                   onPressed: () {
-                    showAppMessage(
+                    message(
                       context,
-                      'Like system পরের ধাপে database-এর সাথে যুক্ত করা হবে ❤️',
+                      'Like database system পরের ধাপে যুক্ত করা যাবে',
                     );
                   },
-                  icon: const Icon(
-                    Icons
-                        .favorite_border,
-                  ),
-                  label:
-                      const Text('Like'),
+                  icon: const Icon(Icons.favorite_border),
+                  label: const Text('Like'),
                 ),
                 TextButton.icon(
-                  onPressed:
-                      _showComments,
-                  icon: const Icon(
-                    Icons
-                        .comment_outlined,
-                  ),
-                  label:
-                      const Text(
-                    'Comment',
-                  ),
+                  onPressed: () {
+                    showComments(post['id']);
+                  },
+                  icon: const Icon(Icons.comment_outlined),
+                  label: const Text('Comment'),
                 ),
                 TextButton.icon(
-                  onPressed: () {},
-                  icon: const Icon(
-                    Icons
-                        .share_outlined,
-                  ),
-                  label:
-                      const Text('Share'),
+                  onPressed: () {
+                    message(context, 'Share link তৈরি হবে');
+                  },
+                  icon: const Icon(Icons.share_outlined),
+                  label: const Text('Share'),
                 ),
               ],
             ),
@@ -1182,122 +881,15 @@ class _HomePageState
     );
   }
 
-  Future<void> _deletePost(
-    dynamic postId,
-  ) async {
+  void showComments(dynamic postId) {
     if (postId == null) return;
 
-    try {
-      await supabase
-          .from('posts')
-          .delete()
-          .eq('id', postId);
-
-      await loadPosts();
-
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Post delete হয়েছে',
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        showAppMessage(
-          context,
-          'Post delete করা যায়নি',
-        );
-      }
-    }
-  }
-
-  void _showComments() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor:
-          const Color(0xFF12151C),
+      backgroundColor: const Color(0xFF12151C),
       builder: (_) {
-        return Padding(
-          padding:
-              EdgeInsets.only(
-            left: 20,
-            right: 20,
-            top: 20,
-            bottom:
-                MediaQuery.of(context)
-                        .viewInsets
-                        .bottom +
-                    20,
-          ),
-          child: SizedBox(
-            height:
-                MediaQuery.of(context)
-                        .size
-                        .height *
-                    .55,
-            child: Column(
-              children: [
-                const Text(
-                  'Comments',
-                  style:
-                      TextStyle(
-                    fontSize: 21,
-                    fontWeight:
-                        FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(
-                    height: 20),
-                const Expanded(
-                  child: Center(
-                    child: Text(
-                      'No comments yet',
-                      style:
-                          TextStyle(
-                        color:
-                            Colors.grey,
-                      ),
-                    ),
-                  ),
-                ),
-                TextField(
-                  decoration:
-                      InputDecoration(
-                    hintText:
-                        'Write a comment...',
-                    filled: true,
-                    fillColor:
-                        const Color(
-                            0xFF1A1D25),
-                    border:
-                        OutlineInputBorder(
-                      borderRadius:
-                          BorderRadius
-                              .circular(
-                                  15),
-                      borderSide:
-                          BorderSide
-                              .none,
-                    ),
-                    suffixIcon:
-                        IconButton(
-                      onPressed: () {
-                        showAppMessage(
-                          context,
-                          'Comment system পরের ধাপে database-এর সাথে যুক্ত করা হবে',
-                        );
-                      },
-                      icon: const Icon(
-                        Icons.send,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        return CommentSheet(postId: postId);
       },
     );
   }
@@ -1316,109 +908,65 @@ class CreatePostPage extends StatefulWidget {
   });
 
   @override
-  State<CreatePostPage> createState() =>
-      _CreatePostPageState();
+  State<CreatePostPage> createState() => _CreatePostPageState();
 }
 
-class _CreatePostPageState
-    extends State<CreatePostPage> {
-  final controller =
-      TextEditingController();
+class _CreatePostPageState extends State<CreatePostPage> {
+  final controller = TextEditingController();
 
   bool publishing = false;
 
-  String get currentName {
-    final user =
-        supabase.auth.currentUser;
-
-    return user?.userMetadata?[
-                'full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
-        'SocialBook User';
-  }
-
-  Future<void> publishPost() async {
-    final text =
-        controller.text.trim();
+  Future<void> publish() async {
+    final text = controller.text.trim();
 
     if (text.isEmpty) {
-      showAppMessage(
-        context,
-        'Post লিখুন',
-      );
+      message(context, 'Post লিখুন');
       return;
     }
 
-    if (text.length > 5000) {
-      showAppMessage(
-        context,
-        'Post সর্বোচ্চ 5000 অক্ষরের হতে পারে',
-      );
-      return;
-    }
-
-    final user =
-        supabase.auth.currentUser;
+    final user = supabase.auth.currentUser;
 
     if (user == null) {
-      showAppMessage(
-        context,
-        'Post করতে Login করুন',
-      );
+      message(context, 'আগে Login করুন');
       return;
     }
 
-    setState(() {
-      publishing = true;
-    });
+    setState(() => publishing = true);
 
     try {
-      await supabase
-          .from('posts')
-          .insert({
+      await supabase.from('posts').insert({
         'user_id': user.id,
         'content': text,
       });
 
-      controller.clear();
-
       if (!mounted) return;
 
-      showAppMessage(
+      controller.clear();
+
+      message(
         context,
-        'Post সফলভাবে প্রকাশ হয়েছে 🎉',
+        '🎉 Post সফলভাবে প্রকাশ হয়েছে',
       );
 
       widget.onPublished?.call();
 
-      Navigator.pop(
-        context,
-        true,
-      );
-    } on PostgrestException catch (
-        error) {
+      Navigator.pop(context, true);
+    } on PostgrestException catch (e) {
       if (mounted) {
-        showAppMessage(
+        message(
           context,
-          error.message,
+          'Database error: ${e.message}',
         );
       }
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
-        showAppMessage(
+        message(
           context,
-          'Post প্রকাশ করতে সমস্যা হয়েছে',
+          'Post করা যায়নি: $e',
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          publishing = false;
-        });
-      }
+      if (mounted) setState(() => publishing = false);
     }
   }
 
@@ -1430,277 +978,67 @@ class _CreatePostPageState
 
   @override
   Widget build(BuildContext context) {
-    final name = currentName;
-
-    final letter = name.isNotEmpty
-        ? name[0].toUpperCase()
-        : 'S';
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Create Post',
-          style:
-              TextStyle(
-            fontWeight:
-                FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: FilledButton(
+              onPressed: publishing ? null : publish,
+              child: publishing
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text('Post'),
+            ),
+          ),
+        ],
       ),
       body: SafeArea(
-        child:
-            SingleChildScrollView(
-          padding:
-              const EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
-            30,
-          ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment
-                    .start,
             children: [
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 25,
-                    backgroundColor:
-                        const Color(
-                            0xFF7C4DFF),
-                    child: Text(
-                      letter,
-                      style:
-                          const TextStyle(
-                        fontSize: 20,
-                        fontWeight:
-                            FontWeight
-                                .bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                      width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment:
-                          CrossAxisAlignment
-                              .start,
-                      children: [
-                        Text(
-                          name,
-                          maxLines: 1,
-                          overflow:
-                              TextOverflow
-                                  .ellipsis,
-                          style:
-                              const TextStyle(
-                            fontWeight:
-                                FontWeight
-                                    .bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(
-                            height: 3),
-                        Text(
-                          'Public post',
-                          style:
-                              TextStyle(
-                            color: Colors
-                                .grey
-                                .shade500,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Icon(
-                    Icons.public,
-                    color: Colors.grey,
-                  ),
-                ],
-              ),
-
-              const SizedBox(
-                  height: 20),
-
-              Container(
-                decoration:
-                    BoxDecoration(
-                  color:
-                      const Color(
-                          0xFF12151C),
-                  borderRadius:
-                      BorderRadius
-                          .circular(18),
-                  border:
-                      Border.all(
-                    color: Colors.white
-                        .withOpacity(.06),
-                  ),
-                ),
-                padding:
-                    const EdgeInsets
-                        .all(16),
+              Expanded(
                 child: TextField(
-                  controller:
-                      controller,
-                  minLines: 8,
-                  maxLines: 14,
-                  maxLength: 5000,
-                  textCapitalization:
-                      TextCapitalization
-                          .sentences,
-                  decoration:
-                      const InputDecoration(
-                    hintText:
-                        'What do you want to share?',
-                    border:
-                        InputBorder
-                            .none,
-                    counterText: '',
-                  ),
-                  style:
-                      const TextStyle(
+                  controller: controller,
+                  maxLines: null,
+                  expands: true,
+                  textAlignVertical: TextAlignVertical.top,
+                  style: const TextStyle(
                     fontSize: 17,
-                    height: 1.5,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: "What's on your mind?",
+                    filled: true,
+                    fillColor: const Color(0xFF151820),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(18),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.all(18),
                   ),
                 ),
               ),
-
-              const SizedBox(
-                  height: 15),
-
-              Container(
-                decoration:
-                    BoxDecoration(
-                  color:
-                      const Color(
-                          0xFF12151C),
-                  borderRadius:
-                      BorderRadius
-                          .circular(16),
-                ),
-                child: Column(
-                  children: [
-                    ListTile(
-                      leading:
-                          const Icon(
-                        Icons
-                            .photo_outlined,
-                        color:
-                            Colors.green,
-                      ),
-                      title:
-                          const Text(
-                        'Add Photo',
-                      ),
-                      subtitle:
-                          const Text(
-                        'Photo upload',
-                      ),
-                      onTap:
-                          publishing
-                              ? null
-                              : () {
-                                  showAppMessage(
-                                    context,
-                                    'Photo upload পরের ধাপে যুক্ত করা হবে 📷',
-                                  );
-                                },
-                    ),
-                    const Divider(
-                        height: 1),
-                    ListTile(
-                      leading:
-                          const Icon(
-                        Icons
-                            .videocam_outlined,
-                        color:
-                            Colors.redAccent,
-                      ),
-                      title:
-                          const Text(
-                        'Add Video',
-                      ),
-                      subtitle:
-                          const Text(
-                        'Video upload',
-                      ),
-                      onTap:
-                          publishing
-                              ? null
-                              : () {
-                                  showAppMessage(
-                                    context,
-                                    'Video upload পরের ধাপে যুক্ত করা হবে 🎬',
-                                  );
-                                },
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(
-                  height: 20),
-
+              const SizedBox(height: 12),
               SizedBox(
-                width:
-                    double.infinity,
-                height: 56,
-                child:
-                    FilledButton.icon(
-                  onPressed:
-                      publishing
-                          ? null
-                          : publishPost,
-                  icon: publishing
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child:
-                              CircularProgressIndicator(
-                            strokeWidth:
-                                2.5,
-                            color:
-                                Colors.white,
-                          ),
-                        )
-                      : const Icon(
-                          Icons
-                              .send_rounded,
-                        ),
+                width: double.infinity,
+                height: 55,
+                child: FilledButton.icon(
+                  onPressed: publishing ? null : publish,
+                  icon: const Icon(Icons.send_rounded),
                   label: Text(
                     publishing
                         ? 'Publishing...'
                         : 'Publish Post',
-                    style:
-                        const TextStyle(
-                      fontSize: 16,
-                      fontWeight:
-                          FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(
-                  height: 10),
-
-              Center(
-                child: Text(
-                  'Your post will be saved securely to SocialBook.',
-                  textAlign:
-                      TextAlign.center,
-                  style:
-                      TextStyle(
-                    color: Colors
-                        .grey
-                        .shade600,
-                    fontSize: 12,
                   ),
                 ),
               ),
@@ -1710,12 +1048,215 @@ class _CreatePostPageState
       ),
     );
   }
-}// ============================================================
+}
+
+// ============================================================
+// COMMENTS
+// ============================================================
+
+class CommentSheet extends StatefulWidget {
+  final dynamic postId;
+
+  const CommentSheet({
+    super.key,
+    required this.postId,
+  });
+
+  @override
+  State<CommentSheet> createState() => _CommentSheetState();
+}
+
+class _CommentSheetState extends State<CommentSheet> {
+  final controller = TextEditingController();
+
+  List<Map<String, dynamic>> comments = [];
+  bool loading = true;
+  bool sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    loadComments();
+  }
+
+  Future<void> loadComments() async {
+    try {
+      final data = await supabase
+          .from('comments')
+          .select()
+          .eq('post_id', widget.postId)
+          .order('created_at', ascending: true);
+
+      if (!mounted) return;
+
+      setState(() {
+        comments = List<Map<String, dynamic>>.from(data);
+        loading = false;
+      });
+    } catch (_) {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> addComment() async {
+    final text = controller.text.trim();
+    final user = supabase.auth.currentUser;
+
+    if (text.isEmpty || user == null) return;
+
+    setState(() => sending = true);
+
+    try {
+      await supabase.from('comments').insert({
+        'post_id': widget.postId,
+        'user_id': user.id,
+        'content': text,
+      });
+
+      controller.clear();
+
+      await loadComments();
+    } catch (e) {
+      if (mounted) {
+        message(context, 'Comment করা যায়নি: $e');
+      }
+    } finally {
+      if (mounted) setState(() => sending = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * .75,
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            children: [
+              const Text(
+                'Comments',
+                style: TextStyle(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 15),
+              Expanded(
+                child: loading
+                    ? const Center(
+                        child: CircularProgressIndicator(),
+                      )
+                    : comments.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No comments yet',
+                              style: TextStyle(
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: comments.length,
+                            itemBuilder: (_, i) {
+                              return ListTile(
+                                leading: const CircleAvatar(
+                                  child: Icon(Icons.person),
+                                ),
+                                title: Text(
+                                  comments[i]['content']
+                                          ?.toString() ??
+                                      '',
+                                ),
+                              );
+                            },
+                          ),
+              ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        hintText: 'Write a comment...',
+                        filled: true,
+                        fillColor: const Color(0xFF191C24),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                    onPressed: sending ? null : addComment,
+                    icon: const Icon(Icons.send),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
 // SEARCH
 // ============================================================
 
-class SearchPage extends StatelessWidget {
+class SearchPage extends StatefulWidget {
   const SearchPage({super.key});
+
+  @override
+  State<SearchPage> createState() => _SearchPageState();
+}
+
+class _SearchPageState extends State<SearchPage> {
+  final controller = TextEditingController();
+
+  List<Map<String, dynamic>> results = [];
+  bool loading = false;
+
+  Future<void> search() async {
+    final q = controller.text.trim();
+
+    if (q.isEmpty) return;
+
+    setState(() => loading = true);
+
+    try {
+      final data = await supabase
+          .from('posts')
+          .select()
+          .ilike('content', '%$q%')
+          .order('created_at', ascending: false);
+
+      if (!mounted) return;
+
+      setState(() {
+        results = List<Map<String, dynamic>>.from(data);
+      });
+    } catch (e) {
+      if (mounted) message(context, 'Search error: $e');
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1723,9 +1264,7 @@ class SearchPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text(
           'Search',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: Padding(
@@ -1733,24 +1272,52 @@ class SearchPage extends StatelessWidget {
         child: Column(
           children: [
             TextField(
-              decoration: inputDecoration(
-                'Search people, posts...',
-                Icons.search,
+              controller: controller,
+              onSubmitted: (_) => search(),
+              decoration: InputDecoration(
+                hintText: 'Search posts...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  onPressed: search,
+                  icon: const Icon(Icons.arrow_forward),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF151820),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-            const SizedBox(height: 40),
-            Icon(
-              Icons.search,
-              size: 80,
-              color: Colors.grey.shade700,
-            ),
-            const SizedBox(height: 10),
-            Text(
-              'Search SocialBook',
-              style: TextStyle(
-                color: Colors.grey.shade500,
-                fontSize: 18,
-              ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: loading
+                  ? const Center(
+                      child: CircularProgressIndicator(),
+                    )
+                  : results.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'Search result এখানে দেখাবে',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        )
+                      : ListView.builder(
+                          itemCount: results.length,
+                          itemBuilder: (_, i) {
+                            return Card(
+                              color: const Color(0xFF12151C),
+                              child: Padding(
+                                padding: const EdgeInsets.all(15),
+                                child: Text(
+                                  results[i]['content']
+                                          ?.toString() ??
+                                      '',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
             ),
           ],
         ),
@@ -1768,44 +1335,28 @@ class NotificationsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const notifications = [
-      'Welcome to SocialBook 🎉',
-      'Your account is connected.',
-      'Create your first post.',
-      'Discover people and communities.',
-    ];
-
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Notifications',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: ListView.builder(
+      body: ListView(
         padding: const EdgeInsets.all(12),
-        itemCount: notifications.length,
-        itemBuilder: (_, index) {
-          return Card(
-            color: const Color(0xFF12151C),
+        children: const [
+          Card(
+            color: Color(0xFF12151C),
             child: ListTile(
-              leading: const CircleAvatar(
+              leading: CircleAvatar(
                 backgroundColor: Color(0xFF7C4DFF),
-                child: Icon(
-                  Icons.notifications,
-                ),
+                child: Icon(Icons.notifications),
               ),
-              title: Text(
-                notifications[index],
-              ),
-              subtitle: const Text(
-                'Just now',
-              ),
+              title: Text('Welcome to SocialBook 🎉'),
+              subtitle: Text('Your account is ready'),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
@@ -1815,18 +1366,19 @@ class NotificationsPage extends StatelessWidget {
 // PROFILE
 // ============================================================
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
-  String get name {
-    final user =
-        supabase.auth.currentUser;
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
 
-    return user?.userMetadata?['full_name']
-            ?.toString() ??
-        user?.email
-            ?.split('@')
-            .first ??
+class _ProfilePageState extends State<ProfilePage> {
+  String get name {
+    final user = supabase.auth.currentUser;
+
+    return user?.userMetadata?['full_name']?.toString() ??
+        user?.email?.split('@').first ??
         'SocialBook User';
   }
 
@@ -1834,47 +1386,87 @@ class ProfilePage extends StatelessWidget {
     return supabase.auth.currentUser?.email ?? '';
   }
 
-  Future<void> logout(
-    BuildContext context,
-  ) async {
+  Future<void> logout() async {
     await supabase.auth.signOut();
+  }
 
-    if (!context.mounted) return;
+  Future<void> editName() async {
+    final controller = TextEditingController(text: name);
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
-      (_) => false,
+    final value = await showDialog<String>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Edit Name'),
+          content: TextField(
+            controller: controller,
+            decoration: const InputDecoration(
+              hintText: 'Your name',
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  controller.text.trim(),
+                );
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
     );
+
+    controller.dispose();
+
+    if (value == null || value.isEmpty) return;
+
+    try {
+      await supabase.auth.updateUser(
+        UserAttributes(
+          data: {
+            'full_name': value,
+          },
+        ),
+      );
+
+      if (mounted) {
+        setState(() {});
+        message(context, 'Profile update হয়েছে');
+      }
+    } catch (e) {
+      if (mounted) {
+        message(context, 'Profile update করা যায়নি: $e');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final letter = name.isNotEmpty
-        ? name[0].toUpperCase()
-        : 'S';
+    final letter =
+        name.isNotEmpty ? name[0].toUpperCase() : 'U';
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Profile',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const SizedBox(height: 20),
-
           Center(
             child: CircleAvatar(
               radius: 60,
-              backgroundColor:
-                  const Color(0xFF7C4DFF),
+              backgroundColor: const Color(0xFF7C4DFF),
               child: Text(
                 letter,
                 style: const TextStyle(
@@ -1884,9 +1476,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 18),
-
           Center(
             child: Text(
               name,
@@ -1896,9 +1486,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 7),
-
           Center(
             child: Text(
               email,
@@ -1907,73 +1495,25 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-
           const SizedBox(height: 30),
-
-          Row(
-            mainAxisAlignment:
-                MainAxisAlignment.spaceEvenly,
-            children: const [
-              ProfileStat(
-                title: 'Posts',
-                value: '0',
-              ),
-              ProfileStat(
-                title: 'Friends',
-                value: '0',
-              ),
-              ProfileStat(
-                title: 'Following',
-                value: '0',
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 30),
-
           Card(
             color: const Color(0xFF12151C),
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(
-                    Icons.person_outline,
-                  ),
-                  title: const Text(
-                    'Edit Profile',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
-                  onTap: () {},
+                  leading: const Icon(Icons.edit_outlined),
+                  title: const Text('Edit Profile'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: editName,
                 ),
-
                 ListTile(
-                  leading: const Icon(
-                    Icons.bookmark_outline,
-                  ),
-                  title: const Text(
-                    'Saved Posts',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
-                  onTap: () {},
+                  leading: const Icon(Icons.settings_outlined),
+                  title: const Text('Settings'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () {
+                    message(context, 'Settings আসছে');
+                  },
                 ),
-
-                ListTile(
-                  leading: const Icon(
-                    Icons.settings_outlined,
-                  ),
-                  title: const Text(
-                    'Settings',
-                  ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
-                  ),
-                  onTap: () {},
-                ),
-
                 ListTile(
                   leading: const Icon(
                     Icons.logout,
@@ -1985,15 +1525,12 @@ class ProfilePage extends StatelessWidget {
                       color: Colors.redAccent,
                     ),
                   ),
-                  onTap: () =>
-                      logout(context),
+                  onTap: logout,
                 ),
               ],
             ),
           ),
-
           const SizedBox(height: 30),
-
           const Center(
             child: Text(
               'Creator: Omor Faruk',
@@ -2005,43 +1542,6 @@ class ProfilePage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// ============================================================
-// PROFILE STAT
-// ============================================================
-
-class ProfileStat extends StatelessWidget {
-  final String title;
-  final String value;
-
-  const ProfileStat({
-    super.key,
-    required this.title,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            color: Colors.grey.shade500,
-          ),
-        ),
-      ],
     );
   }
 }
