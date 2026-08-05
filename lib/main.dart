@@ -2,12 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
-const supabaseUrl = 'https://xsxrcrbcxckicskwppmb.supabase.co';
+const supabaseUrl =
+    'https://xsxrcrbcxckicskwppmb.supabase.co';
 
 const supabasePublishableKey =
     'sb_publishable_0xGXFjbz404LyFWwWo6kzw_wHUgY0NT';
 
 final supabase = Supabase.instance.client;
+
+// ============================================================
+// APP CONSTANTS
+// ============================================================
+
+const Color bgColor = Color(0xFF080A0F);
+const Color cardColor = Color(0xFF12151C);
+const Color inputColor = Color(0xFF181C25);
+const Color primaryColor = Color(0xFF7C4DFF);
+const Color primaryLight = Color(0xFF9B6DFF);
+
+// ============================================================
+// MAIN
+// ============================================================
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +35,10 @@ Future<void> main() async {
   runApp(const SocialBookApp());
 }
 
+// ============================================================
+// APP
+// ============================================================
+
 class SocialBookApp extends StatelessWidget {
   const SocialBookApp({super.key});
 
@@ -28,15 +47,58 @@ class SocialBookApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'SocialBook',
+
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF080A0F),
+        scaffoldBackgroundColor: bgColor,
+
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF7C4DFF),
+          seedColor: primaryColor,
           brightness: Brightness.dark,
         ),
+
+        appBarTheme: const AppBarTheme(
+          backgroundColor: bgColor,
+          elevation: 0,
+          centerTitle: false,
+        ),
+
+        navigationBarTheme:
+            NavigationBarThemeData(
+          backgroundColor: Color(0xFF0D1016),
+          indicatorColor: Color(0x337C4DFF),
+          labelTextStyle:
+              WidgetStatePropertyAll(
+            TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+            ),
+          ),
+        ),
+
+        cardTheme: CardThemeData(
+          color: cardColor,
+          elevation: 0,
+          margin: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius:
+                BorderRadius.circular(20),
+          ),
+        ),
+
+        inputDecorationTheme:
+            InputDecorationTheme(
+          filled: true,
+          fillColor: inputColor,
+          border: OutlineInputBorder(
+            borderRadius:
+                BorderRadius.circular(18),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
+
       home: const AuthGate(),
     );
   }
@@ -70,26 +132,39 @@ class AuthGate extends StatelessWidget {
 
 InputDecoration decoration(
   String hint,
-  IconData icon,
-) {
+  IconData icon, {
+  Widget? suffixIcon,
+}) {
   return InputDecoration(
     hintText: hint,
-    prefixIcon: Icon(icon),
+    prefixIcon: Icon(
+      icon,
+      color: Colors.grey.shade500,
+    ),
+    suffixIcon: suffixIcon,
     filled: true,
-    fillColor: const Color(0xFF151820),
+    fillColor: inputColor,
+    contentPadding:
+        const EdgeInsets.symmetric(
+      horizontal: 18,
+      vertical: 17,
+    ),
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius:
+          BorderRadius.circular(18),
       borderSide: BorderSide.none,
     ),
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius:
+          BorderRadius.circular(18),
       borderSide: BorderSide.none,
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius:
+          BorderRadius.circular(18),
       borderSide: const BorderSide(
-        color: Color(0xFF8B5CF6),
-        width: 1.5,
+        color: primaryLight,
+        width: 1.4,
       ),
     ),
   );
@@ -103,10 +178,145 @@ void message(
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
-        content: Text(text),
-        behavior: SnackBarBehavior.floating,
+        content: Row(
+          children: [
+            const Icon(
+              Icons.info_outline,
+              color: Colors.white,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        behavior:
+            SnackBarBehavior.floating,
+        margin:
+            const EdgeInsets.all(16),
+        shape:
+            RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(16),
+        ),
+        duration:
+            const Duration(seconds: 2),
       ),
     );
+}
+
+Widget professionalButton({
+  required String text,
+  required VoidCallback? onPressed,
+  IconData? icon,
+  bool loading = false,
+}) {
+  return SizedBox(
+    width: double.infinity,
+    height: 54,
+    child: FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        backgroundColor:
+            primaryColor,
+        disabledBackgroundColor:
+            primaryColor.withOpacity(.35),
+        shape:
+            RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(17),
+        ),
+      ),
+      child: loading
+          ? const SizedBox(
+              width: 22,
+              height: 22,
+              child:
+                  CircularProgressIndicator(
+                strokeWidth: 2.2,
+                color: Colors.white,
+              ),
+            )
+          : Row(
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon),
+                  const SizedBox(width: 9),
+                ],
+                Text(
+                  text,
+                  style:
+                      const TextStyle(
+                    fontSize: 16,
+                    fontWeight:
+                        FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+    ),
+  );
+}
+
+Widget userAvatar(
+  String name, {
+  double radius = 22,
+}) {
+  final letter =
+      name.trim().isNotEmpty
+          ? name.trim()[0].toUpperCase()
+          : 'U';
+
+  return CircleAvatar(
+    radius: radius,
+    backgroundColor:
+        primaryColor,
+    child: Text(
+      letter,
+      style: TextStyle(
+        fontSize: radius * .8,
+        fontWeight:
+            FontWeight.bold,
+        color: Colors.white,
+      ),
+    ),
+  );
+}
+
+Widget glassCard({
+  required Widget child,
+  EdgeInsetsGeometry padding =
+      const EdgeInsets.all(16),
+}) {
+  return Container(
+    padding: padding,
+    decoration: BoxDecoration(
+      color: cardColor,
+      borderRadius:
+          BorderRadius.circular(20),
+      border: Border.all(
+        color:
+            Colors.white.withOpacity(.05),
+      ),
+      boxShadow: [
+        BoxShadow(
+          color:
+              Colors.black.withOpacity(.18),
+          blurRadius: 18,
+          offset:
+              const Offset(0, 7),
+        ),
+      ],
+    ),
+    child: child,
+  );
 }
 
 // ============================================================
@@ -117,38 +327,64 @@ class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() =>
+      _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
-  final email = TextEditingController();
-  final password = TextEditingController();
+class _LoginPageState
+    extends State<LoginPage> {
+  final email =
+      TextEditingController();
+
+  final password =
+      TextEditingController();
 
   bool loading = false;
   bool hidden = true;
 
   Future<void> login() async {
-    final e = email.text.trim();
-    final p = password.text;
+    final e =
+        email.text.trim();
+
+    final p =
+        password.text;
 
     if (e.isEmpty || p.isEmpty) {
-      message(context, 'Email এবং Password দিন');
+      message(
+        context,
+        'Email এবং Password দিন',
+      );
       return;
     }
 
-    setState(() => loading = true);
+    setState(() =>
+        loading = true);
 
     try {
-      await supabase.auth.signInWithPassword(
+      await supabase.auth
+          .signInWithPassword(
         email: e,
         password: p,
       );
     } on AuthException catch (e) {
-      if (mounted) message(context, e.message);
+      if (mounted) {
+        message(
+          context,
+          e.message,
+        );
+      }
     } catch (_) {
-      if (mounted) message(context, 'Login করা যায়নি');
+      if (mounted) {
+        message(
+          context,
+          'Login করা যায়নি',
+        );
+      }
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() =>
+            loading = false);
+      }
     }
   }
 
@@ -164,110 +400,145 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+          child:
+              SingleChildScrollView(
+            padding:
+                const EdgeInsets.all(24),
             child: Column(
               children: [
                 Container(
                   width: 100,
                   height: 100,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
+                  decoration:
+                      BoxDecoration(
+                    gradient:
+                        const LinearGradient(
                       colors: [
                         Color(0xFF7C4DFF),
                         Color(0xFFB388FF),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius:
+                        BorderRadius
+                            .circular(30),
                   ),
-                  child: const Icon(
-                    Icons.people_alt_rounded,
+                  child:
+                      const Icon(
+                    Icons
+                        .people_alt_rounded,
                     size: 55,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 24),
+
+                const SizedBox(
+                  height: 24,
+                ),
+
                 const Text(
                   'SocialBook',
                   style: TextStyle(
                     fontSize: 34,
-                    fontWeight: FontWeight.bold,
+                    fontWeight:
+                        FontWeight.bold,
+                    letterSpacing: -.5,
                   ),
                 ),
-                const SizedBox(height: 8),
+
+                const SizedBox(
+                  height: 8,
+                ),
+
                 Text(
                   'Connect. Share. Discover.',
                   style: TextStyle(
-                    color: Colors.grey.shade400,
+                    color:
+                        Colors.grey.shade400,
+                    fontSize: 15,
                   ),
                 ),
-                const SizedBox(height: 40),
+
+                const SizedBox(
+                  height: 40,
+                ),
+
                 TextField(
                   controller: email,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: decoration(
+                  keyboardType:
+                      TextInputType
+                          .emailAddress,
+                  decoration:
+                      decoration(
                     'Email',
-                    Icons.email_outlined,
+                    Icons
+                        .email_outlined,
                   ),
                 ),
-                const SizedBox(height: 15),
+
+                const SizedBox(
+                  height: 15,
+                ),
+
                 TextField(
-                  controller: password,
-                  obscureText: hidden,
-                  decoration: InputDecoration(
-                    hintText: 'Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
-                    suffixIcon: IconButton(
+                  controller:
+                      password,
+                  obscureText:
+                      hidden,
+                  decoration:
+                      decoration(
+                    'Password',
+                    Icons
+                        .lock_outline,
+                    suffixIcon:
+                        IconButton(
                       onPressed: () {
-                        setState(() => hidden = !hidden);
+                        setState(() =>
+                            hidden =
+                                !hidden);
                       },
                       icon: Icon(
                         hidden
-                            ? Icons.visibility_outlined
-                            : Icons.visibility_off_outlined,
+                            ? Icons
+                                .visibility_outlined
+                            : Icons
+                                .visibility_off_outlined,
                       ),
                     ),
-                    filled: true,
-                    fillColor: const Color(0xFF151820),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                 ),
-                const SizedBox(height: 22),
-                SizedBox(
-                  width: double.infinity,
-                  height: 55,
-                  child: FilledButton(
-                    onPressed: loading ? null : login,
-                    child: loading
-                        ? const SizedBox(
-                            width: 23,
-                            height: 23,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Text(
-                            'Login',
-                            style: TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+
+                const SizedBox(
+                  height: 22,
                 ),
-                const SizedBox(height: 10),
+
+                professionalButton(
+                  text: 'Login',
+                  icon: Icons
+                      .login_rounded,
+                  loading: loading,
+                  onPressed:
+                      loading
+                          ? null
+                          : login,
+                ),
+
+                const SizedBox(
+                  height: 10,
+                ),
+
                 TextButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => const SignUpPage(),
+                        builder: (_) =>
+                            const SignUpPage(),
                       ),
                     );
                   },
-                  child: const Text('Create a new account'),
+                  child: const Text(
+                    'Create a new account',
+                  ),
                 ),
               ],
             ),
@@ -282,48 +553,80 @@ class _LoginPageState extends State<LoginPage> {
 // SIGN UP
 // ============================================================
 
-class SignUpPage extends StatefulWidget {
+class SignUpPage
+    extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  State<SignUpPage> createState() => _SignUpPageState();
+  State<SignUpPage> createState() =>
+      _SignUpPageState();
 }
 
-class _SignUpPageState extends State<SignUpPage> {
-  final name = TextEditingController();
-  final email = TextEditingController();
-  final password = TextEditingController();
-  final confirm = TextEditingController();
+class _SignUpPageState
+    extends State<SignUpPage> {
+  final name =
+      TextEditingController();
+
+  final email =
+      TextEditingController();
+
+  final password =
+      TextEditingController();
+
+  final confirm =
+      TextEditingController();
 
   bool loading = false;
   bool hide1 = true;
   bool hide2 = true;
 
   Future<void> signup() async {
-    final n = name.text.trim();
-    final e = email.text.trim();
-    final p = password.text;
-    final c = confirm.text;
+    final n =
+        name.text.trim();
 
-    if (n.isEmpty || e.isEmpty || p.isEmpty || c.isEmpty) {
-      message(context, 'সব তথ্য পূরণ করুন');
+    final e =
+        email.text.trim();
+
+    final p =
+        password.text;
+
+    final c =
+        confirm.text;
+
+    if (n.isEmpty ||
+        e.isEmpty ||
+        p.isEmpty ||
+        c.isEmpty) {
+      message(
+        context,
+        'সব তথ্য পূরণ করুন',
+      );
       return;
     }
 
     if (p.length < 6) {
-      message(context, 'Password কমপক্ষে ৬ অক্ষরের হতে হবে');
+      message(
+        context,
+        'Password কমপক্ষে ৬ অক্ষরের হতে হবে',
+      );
       return;
     }
 
     if (p != c) {
-      message(context, 'Password মিলছে না');
+      message(
+        context,
+        'Password মিলছে না',
+      );
       return;
     }
 
-    setState(() => loading = true);
+    setState(() =>
+        loading = true);
 
     try {
-      final result = await supabase.auth.signUp(
+      final result =
+          await supabase.auth
+              .signUp(
         email: e,
         password: p,
         data: {
@@ -337,7 +640,8 @@ class _SignUpPageState extends State<SignUpPage> {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => const MainNavigation(),
+            builder: (_) =>
+                const MainNavigation(),
           ),
           (_) => false,
         );
@@ -346,14 +650,28 @@ class _SignUpPageState extends State<SignUpPage> {
           context,
           'Account তৈরি হয়েছে। Email confirmation করুন।',
         );
+
         Navigator.pop(context);
       }
     } on AuthException catch (e) {
-      if (mounted) message(context, e.message);
+      if (mounted) {
+        message(
+          context,
+          e.message,
+        );
+      }
     } catch (_) {
-      if (mounted) message(context, 'Signup করা যায়নি');
+      if (mounted) {
+        message(
+          context,
+          'Signup করা যায়নি',
+        );
+      }
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() =>
+            loading = false);
+      }
     }
   }
 
@@ -370,115 +688,149 @@ class _SignUpPageState extends State<SignUpPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Create Account'),
+        title:
+            const Text('Create Account'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+        child:
+            SingleChildScrollView(
+          padding:
+              const EdgeInsets.all(24),
           child: Column(
             children: [
               const Icon(
-                Icons.person_add_alt_1_rounded,
+                Icons
+                    .person_add_alt_1_rounded,
                 size: 80,
-                color: Color(0xFF8B5CF6),
+                color:
+                    primaryLight,
               ),
-              const SizedBox(height: 18),
+
+              const SizedBox(
+                height: 18,
+              ),
+
               const Text(
                 'Create Your Account',
                 style: TextStyle(
                   fontSize: 28,
-                  fontWeight: FontWeight.bold,
+                  fontWeight:
+                      FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 30),
+
+              const SizedBox(
+                height: 30,
+              ),
+
               TextField(
                 controller: name,
-                decoration: decoration(
+                decoration:
+                    decoration(
                   'Full Name',
-                  Icons.person_outline,
+                  Icons
+                      .person_outline,
                 ),
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                height: 15,
+              ),
+
               TextField(
                 controller: email,
-                keyboardType: TextInputType.emailAddress,
-                decoration: decoration(
+                keyboardType:
+                    TextInputType
+                        .emailAddress,
+                decoration:
+                    decoration(
                   'Email',
-                  Icons.email_outlined,
+                  Icons
+                      .email_outlined,
                 ),
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                height: 15,
+              ),
+
               TextField(
-                controller: password,
+                controller:
+                    password,
                 obscureText: hide1,
-                decoration: InputDecoration(
-                  hintText: 'Password',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
+                decoration:
+                    decoration(
+                  'Password',
+                  Icons
+                      .lock_outline,
+                  suffixIcon:
+                      IconButton(
                     onPressed: () {
-                      setState(() => hide1 = !hide1);
+                      setState(() =>
+                          hide1 =
+                              !hide1);
                     },
                     icon: Icon(
                       hide1
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                          ? Icons
+                              .visibility_outlined
+                          : Icons
+                              .visibility_off_outlined,
                     ),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFF151820),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                height: 15,
+              ),
+
               TextField(
                 controller: confirm,
                 obscureText: hide2,
-                decoration: InputDecoration(
-                  hintText: 'Confirm Password',
-                  prefixIcon: const Icon(Icons.lock_reset),
-                  suffixIcon: IconButton(
+                decoration:
+                    decoration(
+                  'Confirm Password',
+                  Icons.lock_reset,
+                  suffixIcon:
+                      IconButton(
                     onPressed: () {
-                      setState(() => hide2 = !hide2);
+                      setState(() =>
+                          hide2 =
+                              !hide2);
                     },
                     icon: Icon(
                       hide2
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+                          ? Icons
+                              .visibility_outlined
+                          : Icons
+                              .visibility_off_outlined,
                     ),
                   ),
-                  filled: true,
-                  fillColor: const Color(0xFF151820),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(16),
-                    borderSide: BorderSide.none,
-                  ),
                 ),
               ),
-              const SizedBox(height: 22),
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: FilledButton(
-                  onPressed: loading ? null : signup,
-                  child: loading
-                      ? const CircularProgressIndicator(
-                          strokeWidth: 2,
-                        )
-                      : const Text(
-                          'Sign Up',
-                          style: TextStyle(
-                            fontSize: 17,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
+
+              const SizedBox(
+                height: 22,
               ),
+
+              professionalButton(
+                text: 'Sign Up',
+                icon: Icons
+                    .person_add_alt_1,
+                loading: loading,
+                onPressed:
+                    loading
+                        ? null
+                        : signup,
+              ),
+
               TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
+                onPressed: () =>
+                    Navigator.pop(
+                        context),
+                child:
+                    const Text(
                   'Already have an account? Login',
                 ),
               ),
@@ -494,25 +846,32 @@ class _SignUpPageState extends State<SignUpPage> {
 // MAIN NAVIGATION
 // ============================================================
 
-class MainNavigation extends StatefulWidget {
+class MainNavigation
+    extends StatefulWidget {
   const MainNavigation({super.key});
 
   @override
-  State<MainNavigation> createState() => _MainNavigationState();
+  State<MainNavigation> createState() =>
+      _MainNavigationState();
 }
 
-class _MainNavigationState extends State<MainNavigation> {
+class _MainNavigationState
+    extends State<MainNavigation> {
   int index = 0;
 
-  Future<void> openCreatePost() async {
-    final result = await Navigator.push<bool>(
+  Future<void>
+      openCreatePost() async {
+    final result =
+        await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => const CreatePostPage(),
+        builder: (_) =>
+            const CreatePostPage(),
       ),
     );
 
-    if (result == true && mounted) {
+    if (result == true &&
+        mounted) {
       setState(() {});
     }
   }
@@ -521,13 +880,16 @@ class _MainNavigationState extends State<MainNavigation> {
   Widget build(BuildContext context) {
     final pages = [
       HomePage(
-        onRefresh: () => setState(() {}),
-        onCreatePost: openCreatePost,
+        onRefresh: () =>
+            setState(() {}),
+        onCreatePost:
+            openCreatePost,
       ),
       const SearchPage(),
       CreatePostPage(
         onPublished: () {
-          setState(() => index = 0);
+          setState(() =>
+              index = 0);
         },
       ),
       const NotificationsPage(),
@@ -539,34 +901,57 @@ class _MainNavigationState extends State<MainNavigation> {
         index: index,
         children: pages,
       ),
-      bottomNavigationBar: NavigationBar(
+
+      bottomNavigationBar:
+          NavigationBar(
         selectedIndex: index,
-        onDestinationSelected: (i) {
-          setState(() => index = i);
+        onDestinationSelected:
+            (i) {
+          setState(() =>
+              index = i);
         },
-        destinations: const [
+        destinations:
+            const [
           NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
+            icon: Icon(
+              Icons.home_outlined,
+            ),
+            selectedIcon:
+                Icon(Icons.home),
             label: 'Home',
           ),
           NavigationDestination(
-            icon: Icon(Icons.search),
+            icon:
+                Icon(Icons.search),
             label: 'Search',
           ),
           NavigationDestination(
-            icon: Icon(Icons.add_box_outlined),
-            selectedIcon: Icon(Icons.add_box),
+            icon: Icon(
+              Icons
+                  .add_box_outlined,
+            ),
+            selectedIcon:
+                Icon(Icons.add_box),
             label: 'Create',
           ),
           NavigationDestination(
-            icon: Icon(Icons.notifications_outlined),
-            selectedIcon: Icon(Icons.notifications),
+            icon: Icon(
+              Icons
+                  .notifications_outlined,
+            ),
+            selectedIcon:
+                Icon(
+              Icons.notifications,
+            ),
             label: 'Alerts',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(
+              Icons
+                  .person_outline,
+            ),
+            selectedIcon:
+                Icon(Icons.person),
             label: 'Profile',
           ),
         ],
@@ -579,7 +964,8 @@ class _MainNavigationState extends State<MainNavigation> {
 // HOME
 // ============================================================
 
-class HomePage extends StatefulWidget {
+class HomePage
+    extends StatefulWidget {
   final VoidCallback? onRefresh;
   final VoidCallback? onCreatePost;
 
@@ -590,12 +976,19 @@ class HomePage extends StatefulWidget {
   });
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePage> createState() =>
+      _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState
+    extends State<HomePage> {
   bool loading = true;
-  List<Map<String, dynamic>> posts = [];
+
+  List<Map<String, dynamic>>
+      posts = [];
+
+  final Set<dynamic> likedPosts =
+      {};
 
   @override
   void initState() {
@@ -604,98 +997,135 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> loadPosts() async {
-    setState(() => loading = true);
+    setState(() =>
+        loading = true);
 
     try {
-      final data = await supabase
-          .from('posts')
-          .select()
-          .order('created_at', ascending: false);
+      final data =
+          await supabase
+              .from('posts')
+              .select()
+              .order(
+                'created_at',
+                ascending: false,
+              );
 
       if (!mounted) return;
 
       setState(() {
-        posts = List<Map<String, dynamic>>.from(data);
+        posts =
+            List<Map<String,
+                dynamic>>.from(data);
       });
     } catch (e) {
       if (mounted) {
-        message(context, 'Post load করা যায়নি: $e');
+        message(
+          context,
+          'Post load করা যায়নি',
+        );
       }
     } finally {
-      if (mounted) setState(() => loading = false);
+      if (mounted) {
+        setState(() =>
+            loading = false);
+      }
     }
   }
 
   String get currentName {
-    final user = supabase.auth.currentUser;
+    final user =
+        supabase.auth.currentUser;
 
-    return user?.userMetadata?['full_name']?.toString() ??
-        user?.email?.split('@').first ??
+    return user
+            ?.userMetadata?[
+                'full_name']
+            ?.toString() ??
+        user?.email
+            ?.split('@')
+            .first ??
         'User';
   }
 
   Future<void> logout() async {
     await supabase.auth.signOut();
-
-    if (!mounted) return;
-
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(),
-      ),
-      (_) => false,
-    );
   }
 
-  Future<void> deletePost(dynamic id) async {
-    final user = supabase.auth.currentUser;
+  Future<void> deletePost(
+      dynamic id) async {
+    final user =
+        supabase.auth.currentUser;
 
-    if (user == null || id == null) return;
+    if (user == null ||
+        id == null) {
+      return;
+    }
 
     try {
       await supabase
           .from('posts')
           .delete()
           .eq('id', id)
-          .eq('user_id', user.id);
+          .eq(
+            'user_id',
+            user.id,
+          );
 
       await loadPosts();
 
       if (mounted) {
-        message(context, 'Post delete হয়েছে');
+        message(
+          context,
+          'Post delete হয়েছে',
+        );
       }
     } catch (e) {
       if (mounted) {
-        message(context, 'Delete করা যায়নি: $e');
+        message(
+          context,
+          'Delete করা যায়নি',
+        );
       }
     }
   }
 
-  // ==========================================================
-  // SHARE POST
-  // ==========================================================
-
-  Future<void> sharePost(Map<String, dynamic> post) async {
-    final content = post['content']?.toString() ?? '';
-
-    final shareText =
-        'SocialBook Post\n\n'
-        '$content\n\n'
-        'Shared from SocialBook';
+  Future<void> sharePost(
+      Map<String, dynamic>
+          post) async {
+    final content =
+        post['content']
+                ?.toString() ??
+            '';
 
     try {
-      await SharePlus.instance.share(
+      await SharePlus.instance
+          .share(
         ShareParams(
-          text: shareText,
-          subject: 'SocialBook Post',
+          text:
+              'SocialBook Post\n\n$content\n\nShared from SocialBook',
+          subject:
+              'SocialBook Post',
         ),
       );
     } catch (e) {
       if (mounted) {
-        message(context, 'Share করা যায়নি: $e');
+        message(
+          context,
+          'Share করা যায়নি',
+        );
       }
     }
+  }
+
+  void toggleLike(dynamic id) {
+    if (id == null) return;
+
+    setState(() {
+      if (likedPosts.contains(id)) {
+        likedPosts.remove(id);
+      } else {
+        likedPosts.add(id);
+      }
+    });
   }
 
   @override
@@ -705,52 +1135,88 @@ class _HomePageState extends State<HomePage> {
         title: const Text(
           'SocialBook',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
             fontSize: 24,
           ),
         ),
         actions: [
           IconButton(
-            onPressed: widget.onCreatePost,
-            icon: const Icon(Icons.add_box_outlined),
+            onPressed:
+                widget.onCreatePost,
+            icon: const Icon(
+              Icons
+                  .add_circle_outline,
+            ),
           ),
           IconButton(
             onPressed: logout,
-            icon: const Icon(Icons.logout),
+            icon: const Icon(
+              Icons.logout_rounded,
+            ),
           ),
         ],
       ),
+
       body: RefreshIndicator(
         onRefresh: loadPosts,
         child: loading
             ? const Center(
-                child: CircularProgressIndicator(),
+                child:
+                    CircularProgressIndicator(),
               )
             : ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.only(
+                physics:
+                    const AlwaysScrollableScrollPhysics(),
+                padding:
+                    const EdgeInsets.only(
                   top: 12,
                   bottom: 30,
                 ),
                 children: [
                   createPostBox(),
-                  const SizedBox(height: 12),
+
+                  const SizedBox(
+                    height: 14,
+                  ),
+
                   if (posts.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.all(40),
-                      child: Center(
-                        child: Text(
-                          'এখনও কোনো Post নেই',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 16,
-                          ),
+                    glassCard(
+                      padding:
+                          const EdgeInsets
+                              .all(40),
+                      child:
+                          const Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons
+                                  .post_add_outlined,
+                              size: 50,
+                              color:
+                                  Colors.grey,
+                            ),
+                            SizedBox(
+                              height: 12,
+                            ),
+                            Text(
+                              'এখনও কোনো Post নেই',
+                              style:
+                                  TextStyle(
+                                color:
+                                    Colors.grey,
+                                fontSize:
+                                    16,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     )
                   else
                     ...posts.map(
-                      (post) => postCard(post),
+                      (post) =>
+                          postCard(post),
                     ),
                 ],
               ),
@@ -759,34 +1225,57 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget createPostBox() {
-    final letter = currentName.isNotEmpty
-        ? currentName[0].toUpperCase()
-        : 'U';
-
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12),
-      color: const Color(0xFF12151C),
-      child: InkWell(
-        onTap: widget.onCreatePost,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.all(15),
+    return Padding(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 12,
+      ),
+      child: glassCard(
+        child: InkWell(
+          onTap:
+              widget.onCreatePost,
+          borderRadius:
+              BorderRadius.circular(
+                  16),
           child: Row(
             children: [
-              CircleAvatar(
-                backgroundColor: const Color(0xFF7C4DFF),
-                child: Text(letter),
+              userAvatar(
+                currentName,
+                radius: 23,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(
+                width: 12,
+              ),
               const Expanded(
                 child: Text(
                   "What's on your mind?",
-                  style: TextStyle(color: Colors.grey),
+                  style:
+                      TextStyle(
+                    color:
+                        Colors.grey,
+                    fontSize:
+                        15,
+                  ),
                 ),
               ),
-              const Icon(
-                Icons.edit_outlined,
-                color: Color(0xFF9B6DFF),
+              Container(
+                padding:
+                    const EdgeInsets
+                        .all(10),
+                decoration:
+                    BoxDecoration(
+                  color: primaryColor
+                      .withOpacity(.15),
+                  shape:
+                      BoxShape.circle,
+                ),
+                child:
+                    const Icon(
+                  Icons
+                      .edit_outlined,
+                  color:
+                      primaryLight,
+                ),
               ),
             ],
           ),
@@ -795,126 +1284,238 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget postCard(Map<String, dynamic> post) {
-    final user = supabase.auth.currentUser;
+  Widget postCard(
+      Map<String, dynamic>
+          post) {
+    final user =
+        supabase.auth.currentUser;
 
-    final ownerId = post['user_id']?.toString();
-    final mine = user != null && ownerId == user.id;
+    final ownerId =
+        post['user_id']
+            ?.toString();
 
-    final content = post['content']?.toString() ?? '';
+    final mine =
+        user != null &&
+            ownerId == user.id;
 
-    String author = 'SocialBook User';
+    final content =
+        post['content']
+                ?.toString() ??
+            '';
+
+    String author =
+        'SocialBook User';
 
     if (mine) {
       author =
-          user?.userMetadata?['full_name']?.toString() ??
-          user?.email?.split('@').first ??
+          user?.userMetadata?[
+                  'full_name']
+              ?.toString() ??
+          user?.email
+              ?.split('@')
+              .first ??
           'You';
     }
 
-    final letter =
-        author.isNotEmpty ? author[0].toUpperCase() : 'U';
+    final liked =
+        likedPosts.contains(
+            post['id']);
 
-    return Card(
-      margin: const EdgeInsets.symmetric(
+    return Padding(
+      padding:
+          const EdgeInsets
+              .symmetric(
         horizontal: 12,
         vertical: 7,
       ),
-      color: const Color(0xFF12151C),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
+      child: glassCard(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment:
+              CrossAxisAlignment
+                  .start,
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0xFF7C4DFF),
-                  child: Text(letter),
+                userAvatar(author),
+
+                const SizedBox(
+                  width: 10,
                 ),
-                const SizedBox(width: 10),
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment:
-                        CrossAxisAlignment.start,
+                        CrossAxisAlignment
+                            .start,
                     children: [
                       Text(
                         author,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                        style:
+                            const TextStyle(
+                          fontWeight:
+                              FontWeight.bold,
+                          fontSize:
+                              16,
                         ),
                       ),
-                      const SizedBox(height: 3),
-                      const Text(
-                        'Public post',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 12,
-                        ),
+                      const SizedBox(
+                        height: 3,
+                      ),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons
+                                .public,
+                            size: 13,
+                            color: Colors
+                                .grey
+                                .shade600,
+                          ),
+                          const SizedBox(
+                            width: 4,
+                          ),
+                          Text(
+                            'Public',
+                            style:
+                                TextStyle(
+                              color: Colors
+                                  .grey
+                                  .shade600,
+                              fontSize:
+                                  12,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
+
                 if (mine)
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'delete') {
-                        deletePost(post['id']);
+                  PopupMenuButton<
+                      String>(
+                    onSelected:
+                        (value) {
+                      if (value ==
+                          'delete') {
+                        deletePost(
+                          post['id'],
+                        );
                       }
                     },
-                    itemBuilder: (_) => const [
+                    itemBuilder:
+                        (_) =>
+                            const [
                       PopupMenuItem(
-                        value: 'delete',
-                        child: Text('Delete'),
+                        value:
+                            'delete',
+                        child:
+                            Row(
+                          children: [
+                            Icon(
+                              Icons
+                                  .delete_outline,
+                              color:
+                                  Colors.redAccent,
+                            ),
+                            SizedBox(
+                              width:
+                                  8,
+                            ),
+                            Text(
+                                'Delete'),
+                          ],
+                        ),
                       ),
                     ],
                   ),
               ],
             ),
-            const SizedBox(height: 15),
+
+            const SizedBox(
+              height: 16,
+            ),
+
             Text(
               content,
-              style: const TextStyle(
+              style:
+                  const TextStyle(
                 fontSize: 16,
-                height: 1.5,
+                height: 1.55,
               ),
             ),
-            const SizedBox(height: 15),
-            const Divider(),
+
+            const SizedBox(
+              height: 16,
+            ),
+
+            Divider(
+              color: Colors.white
+                  .withOpacity(.06),
+            ),
+
             Row(
               mainAxisAlignment:
-                  MainAxisAlignment.spaceAround,
+                  MainAxisAlignment
+                      .spaceAround,
               children: [
                 TextButton.icon(
-                  onPressed: () {
-                    message(
-                      context,
-                      'Like database system পরের ধাপে যুক্ত করা যাবে',
-                    );
-                  },
-                  icon: const Icon(
-                    Icons.favorite_border,
+                  onPressed: () =>
+                      toggleLike(
+                          post['id']),
+                  icon: Icon(
+                    liked
+                        ? Icons
+                            .favorite
+                        : Icons
+                            .favorite_border,
+                    color: liked
+                        ? Colors
+                            .redAccent
+                        : Colors.grey,
                   ),
-                  label: const Text('Like'),
+                  label: Text(
+                    liked
+                        ? 'Liked'
+                        : 'Like',
+                    style:
+                        TextStyle(
+                      color: liked
+                          ? Colors
+                              .redAccent
+                          : Colors.grey,
+                    ),
+                  ),
                 ),
+
                 TextButton.icon(
-                  onPressed: () {
-                    showComments(post['id']);
-                  },
-                  icon: const Icon(
-                    Icons.comment_outlined,
+                  onPressed: () =>
+                      showComments(
+                    post['id'],
                   ),
-                  label: const Text('Comment'),
+                  icon:
+                      const Icon(
+                    Icons
+                        .comment_outlined,
+                  ),
+                  label:
+                      const Text(
+                    'Comment',
+                  ),
                 ),
+
                 TextButton.icon(
-                  onPressed: () {
-                    sharePost(post);
-                  },
-                  icon: const Icon(
-                    Icons.share_outlined,
+                  onPressed: () =>
+                      sharePost(post),
+                  icon:
+                      const Icon(
+                    Icons
+                        .share_outlined,
                   ),
-                  label: const Text('Share'),
+                  label:
+                      const Text(
+                    'Share',
+                  ),
                 ),
               ],
             ),
@@ -924,15 +1525,19 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void showComments(dynamic postId) {
+  void showComments(
+      dynamic postId) {
     if (postId == null) return;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: const Color(0xFF12151C),
+      backgroundColor:
+          cardColor,
       builder: (_) {
-        return CommentSheet(postId: postId);
+        return CommentSheet(
+          postId: postId,
+        );
       },
     );
   }
@@ -942,7 +1547,8 @@ class _HomePageState extends State<HomePage> {
 // CREATE POST
 // ============================================================
 
-class CreatePostPage extends StatefulWidget {
+class CreatePostPage
+    extends StatefulWidget {
   final VoidCallback? onPublished;
 
   const CreatePostPage({
@@ -951,33 +1557,48 @@ class CreatePostPage extends StatefulWidget {
   });
 
   @override
-  State<CreatePostPage> createState() => _CreatePostPageState();
+  State<CreatePostPage>
+      createState() =>
+          _CreatePostPageState();
 }
 
-class _CreatePostPageState extends State<CreatePostPage> {
-  final controller = TextEditingController();
+class _CreatePostPageState
+    extends State<CreatePostPage> {
+  final controller =
+      TextEditingController();
 
   bool publishing = false;
 
   Future<void> publish() async {
-    final text = controller.text.trim();
+    final text =
+        controller.text.trim();
 
     if (text.isEmpty) {
-      message(context, 'Post লিখুন');
+      message(
+        context,
+        'Post লিখুন',
+      );
       return;
     }
 
-    final user = supabase.auth.currentUser;
+    final user =
+        supabase.auth.currentUser;
 
     if (user == null) {
-      message(context, 'আগে Login করুন');
+      message(
+        context,
+        'আগে Login করুন',
+      );
       return;
     }
 
-    setState(() => publishing = true);
+    setState(() =>
+        publishing = true);
 
     try {
-      await supabase.from('posts').insert({
+      await supabase
+          .from('posts')
+          .insert({
         'user_id': user.id,
         'content': text,
       });
@@ -993,7 +1614,10 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
       widget.onPublished?.call();
 
-      Navigator.pop(context, true);
+      Navigator.pop(
+        context,
+        true,
+      );
     } on PostgrestException catch (e) {
       if (mounted) {
         message(
@@ -1001,16 +1625,17 @@ class _CreatePostPageState extends State<CreatePostPage> {
           'Database error: ${e.message}',
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         message(
           context,
-          'Post করা যায়নি: $e',
+          'Post করা যায়নি',
         );
       }
     } finally {
       if (mounted) {
-        setState(() => publishing = false);
+        setState(() =>
+            publishing = false);
       }
     }
   }
@@ -1028,73 +1653,90 @@ class _CreatePostPageState extends State<CreatePostPage> {
         title: const Text(
           'Create Post',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
           ),
         ),
         actions: [
           Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: FilledButton(
-              onPressed: publishing ? null : publish,
-              child: publishing
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text('Post'),
+            padding:
+                const EdgeInsets.only(
+              right: 12,
+            ),
+            child:
+                FilledButton(
+              onPressed:
+                  publishing
+                      ? null
+                      : publish,
+              child: Text(
+                publishing
+                    ? '...'
+                    : 'Post',
+              ),
             ),
           ),
         ],
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding:
+              const EdgeInsets.all(16),
           child: Column(
             children: [
               Expanded(
                 child: TextField(
-                  controller: controller,
+                  controller:
+                      controller,
                   maxLines: null,
                   expands: true,
                   textAlignVertical:
-                      TextAlignVertical.top,
-                  style: const TextStyle(
+                      TextAlignVertical
+                          .top,
+                  style:
+                      const TextStyle(
                     fontSize: 17,
+                    height: 1.5,
                   ),
-                  decoration: InputDecoration(
+                  decoration:
+                      InputDecoration(
                     hintText:
                         "What's on your mind?",
                     filled: true,
                     fillColor:
-                        const Color(0xFF151820),
-                    border: OutlineInputBorder(
+                        inputColor,
+                    border:
+                        OutlineInputBorder(
                       borderRadius:
-                          BorderRadius.circular(18),
-                      borderSide: BorderSide.none,
+                          BorderRadius
+                              .circular(
+                                  20),
+                      borderSide:
+                          BorderSide.none,
                     ),
                     contentPadding:
-                        const EdgeInsets.all(18),
+                        const EdgeInsets
+                            .all(20),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: FilledButton.icon(
-                  onPressed:
-                      publishing ? null : publish,
-                  icon:
-                      const Icon(Icons.send_rounded),
-                  label: Text(
+
+              const SizedBox(
+                height: 12,
+              ),
+
+              professionalButton(
+                text: publishing
+                    ? 'Publishing...'
+                    : 'Publish Post',
+                icon:
+                    Icons.send_rounded,
+                loading:
+                    publishing,
+                onPressed:
                     publishing
-                        ? 'Publishing...'
-                        : 'Publish Post',
-                  ),
-                ),
+                        ? null
+                        : publish,
               ),
             ],
           ),
@@ -1108,7 +1750,8 @@ class _CreatePostPageState extends State<CreatePostPage> {
 // COMMENTS
 // ============================================================
 
-class CommentSheet extends StatefulWidget {
+class CommentSheet
+    extends StatefulWidget {
   final dynamic postId;
 
   const CommentSheet({
@@ -1117,15 +1760,19 @@ class CommentSheet extends StatefulWidget {
   });
 
   @override
-  State<CommentSheet> createState() =>
-      _CommentSheetState();
+  State<CommentSheet>
+      createState() =>
+          _CommentSheetState();
 }
 
 class _CommentSheetState
     extends State<CommentSheet> {
-  final controller = TextEditingController();
+  final controller =
+      TextEditingController();
 
-  List<Map<String, dynamic>> comments = [];
+  List<Map<String, dynamic>>
+      comments = [];
+
   bool loading = true;
   bool sending = false;
 
@@ -1137,57 +1784,75 @@ class _CommentSheetState
 
   Future<void> loadComments() async {
     try {
-      final data = await supabase
-          .from('comments')
-          .select()
-          .eq('post_id', widget.postId)
-          .order(
-            'created_at',
-            ascending: true,
-          );
+      final data =
+          await supabase
+              .from('comments')
+              .select()
+              .eq(
+                'post_id',
+                widget.postId,
+              )
+              .order(
+                'created_at',
+                ascending: true,
+              );
 
       if (!mounted) return;
 
       setState(() {
         comments =
-            List<Map<String, dynamic>>.from(data);
+            List<Map<String,
+                dynamic>>.from(data);
         loading = false;
       });
     } catch (_) {
       if (mounted) {
-        setState(() => loading = false);
+        setState(() =>
+            loading = false);
       }
     }
   }
 
   Future<void> addComment() async {
-    final text = controller.text.trim();
-    final user = supabase.auth.currentUser;
+    final text =
+        controller.text.trim();
 
-    if (text.isEmpty || user == null) return;
+    final user =
+        supabase.auth.currentUser;
 
-    setState(() => sending = true);
+    if (text.isEmpty ||
+        user == null) {
+      return;
+    }
+
+    setState(() =>
+        sending = true);
 
     try {
-      await supabase.from('comments').insert({
-        'post_id': widget.postId,
-        'user_id': user.id,
+      await supabase
+          .from('comments')
+          .insert({
+        'post_id':
+            widget.postId,
+        'user_id':
+            user.id,
         'content': text,
       });
 
       controller.clear();
 
       await loadComments();
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         message(
           context,
-          'Comment করা যায়নি: $e',
+          'Comment করা যায়নি',
         );
       }
     } finally {
       if (mounted) {
-        setState(() => sending = false);
+        setState(() =>
+            sending = false);
       }
     }
   }
@@ -1203,85 +1868,181 @@ class _CommentSheetState
     return SafeArea(
       child: SizedBox(
         height:
-            MediaQuery.of(context).size.height * .75,
+            MediaQuery.of(context)
+                    .size
+                    .height *
+                .78,
         child: Padding(
-          padding: const EdgeInsets.all(18),
+          padding:
+              const EdgeInsets.all(
+            18,
+          ),
           child: Column(
             children: [
-              const Text(
-                'Comments',
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.bold,
+              Container(
+                width: 45,
+                height: 5,
+                decoration:
+                    BoxDecoration(
+                  color:
+                      Colors.grey.shade700,
+                  borderRadius:
+                      BorderRadius
+                          .circular(10),
                 ),
               ),
-              const SizedBox(height: 15),
+
+              const SizedBox(
+                height: 15,
+              ),
+
+              const Text(
+                'Comments',
+                style:
+                    TextStyle(
+                  fontSize: 21,
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+
+              const SizedBox(
+                height: 15,
+              ),
+
               Expanded(
                 child: loading
                     ? const Center(
                         child:
                             CircularProgressIndicator(),
                       )
-                    : comments.isEmpty
+                    : comments
+                            .isEmpty
                         ? const Center(
-                            child: Text(
+                            child:
+                                Text(
                               'No comments yet',
-                              style: TextStyle(
-                                color: Colors.grey,
+                              style:
+                                  TextStyle(
+                                color:
+                                    Colors.grey,
                               ),
                             ),
                           )
-                        : ListView.builder(
+                        : ListView
+                            .builder(
                             itemCount:
-                                comments.length,
-                            itemBuilder: (_, i) {
-                              return ListTile(
-                                leading:
-                                    const CircleAvatar(
-                                  child: Icon(
-                                    Icons.person,
-                                  ),
+                                comments
+                                    .length,
+                            itemBuilder:
+                                (_, i) {
+                              final text =
+                                  comments[i]['content']
+                                          ?.toString() ??
+                                      '';
+
+                              return Padding(
+                                padding:
+                                    const EdgeInsets
+                                        .only(
+                                  bottom:
+                                      10,
                                 ),
-                                title: Text(
-                                  comments[i]
-                                          ['content']
-                                      ?.toString() ??
-                                      '',
+                                child:
+                                    Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment
+                                          .start,
+                                  children: [
+                                    userAvatar(
+                                      'User',
+                                      radius:
+                                          19,
+                                    ),
+                                    const SizedBox(
+                                      width:
+                                          10,
+                                    ),
+                                    Expanded(
+                                      child:
+                                          Container(
+                                        padding:
+                                            const EdgeInsets
+                                                .symmetric(
+                                          horizontal:
+                                              14,
+                                          vertical:
+                                              11,
+                                        ),
+                                        decoration:
+                                            BoxDecoration(
+                                          color:
+                                              inputColor,
+                                          borderRadius:
+                                              BorderRadius
+                                                  .circular(
+                                            16,
+                                          ),
+                                        ),
+                                        child:
+                                            Text(
+                                          text,
+                                          style:
+                                              const TextStyle(
+                                            height:
+                                                1.35,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               );
                             },
                           ),
               ),
+
               Row(
                 children: [
                   Expanded(
-                    child: TextField(
-                      controller: controller,
+                    child:
+                        TextField(
+                      controller:
+                          controller,
+                      textInputAction:
+                          TextInputAction
+                              .send,
+                      onSubmitted:
+                          (_) =>
+                              addComment(),
                       decoration:
-                          InputDecoration(
-                        hintText:
-                            'Write a comment...',
-                        filled: true,
-                        fillColor:
-                            const Color(0xFF191C24),
-                        border:
-                            OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.circular(
-                            16,
-                          ),
-                          borderSide:
-                              BorderSide.none,
-                        ),
+                          decoration(
+                        'Write a comment...',
+                        Icons
+                            .chat_bubble_outline,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+
+                  const SizedBox(
+                    width: 8,
+                  ),
+
                   IconButton.filled(
                     onPressed:
-                        sending ? null : addComment,
+                        sending
+                            ? null
+                            : addComment,
+                    style:
+                        IconButton
+                            .styleFrom(
+                      backgroundColor:
+                          primaryColor,
+                    ),
                     icon:
-                        const Icon(Icons.send),
+                        const Icon(
+                      Icons.send,
+                    ),
                   ),
                 ],
               ),
@@ -1297,53 +2058,69 @@ class _CommentSheetState
 // SEARCH
 // ============================================================
 
-class SearchPage extends StatefulWidget {
+class SearchPage
+    extends StatefulWidget {
   const SearchPage({super.key});
 
   @override
-  State<SearchPage> createState() =>
-      _SearchPageState();
+  State<SearchPage>
+      createState() =>
+          _SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
-  final controller = TextEditingController();
+class _SearchPageState
+    extends State<SearchPage> {
+  final controller =
+      TextEditingController();
 
-  List<Map<String, dynamic>> results = [];
+  List<Map<String, dynamic>>
+      results = [];
+
   bool loading = false;
 
   Future<void> search() async {
-    final q = controller.text.trim();
+    final q =
+        controller.text.trim();
 
-    if (q.isEmpty) return;
+    if (q.isEmpty) {
+      return;
+    }
 
-    setState(() => loading = true);
+    setState(() =>
+        loading = true);
 
     try {
-      final data = await supabase
-          .from('posts')
-          .select()
-          .ilike('content', '%$q%')
-          .order(
-            'created_at',
-            ascending: false,
-          );
+      final data =
+          await supabase
+              .from('posts')
+              .select()
+              .ilike(
+                'content',
+                '%$q%',
+              )
+              .order(
+                'created_at',
+                ascending: false,
+              );
 
       if (!mounted) return;
 
       setState(() {
         results =
-            List<Map<String, dynamic>>.from(data);
+            List<Map<String,
+                dynamic>>.from(data);
       });
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         message(
           context,
-          'Search error: $e',
+          'Search error',
         );
       }
     } finally {
       if (mounted) {
-        setState(() => loading = false);
+        setState(() =>
+            loading = false);
       }
     }
   }
@@ -1361,38 +2138,40 @@ class _SearchPageState extends State<SearchPage> {
         title: const Text(
           'Search',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
           ),
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding:
+            const EdgeInsets.all(16),
         child: Column(
           children: [
             TextField(
-              controller: controller,
-              onSubmitted: (_) => search(),
-              decoration: InputDecoration(
-                hintText: 'Search posts...',
-                prefixIcon:
-                    const Icon(Icons.search),
-                suffixIcon: IconButton(
+              controller:
+                  controller,
+              onSubmitted: (_) =>
+                  search(),
+              decoration:
+                  decoration(
+                'Search posts...',
+                Icons.search,
+                suffixIcon:
+                    IconButton(
                   onPressed: search,
                   icon: const Icon(
-                    Icons.arrow_forward,
+                    Icons
+                        .arrow_forward_rounded,
                   ),
-                ),
-                filled: true,
-                fillColor:
-                    const Color(0xFF151820),
-                border: OutlineInputBorder(
-                  borderRadius:
-                      BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+
+            const SizedBox(
+              height: 18,
+            ),
+
             Expanded(
               child: loading
                   ? const Center(
@@ -1403,28 +2182,39 @@ class _SearchPageState extends State<SearchPage> {
                       ? const Center(
                           child: Text(
                             'Search result এখানে দেখাবে',
-                            style: TextStyle(
-                              color: Colors.grey,
+                            style:
+                                TextStyle(
+                              color:
+                                  Colors.grey,
                             ),
                           ),
                         )
                       : ListView.builder(
                           itemCount:
                               results.length,
-                          itemBuilder: (_, i) {
-                            return Card(
-                              color: const Color(
-                                0xFF12151C,
+                          itemBuilder:
+                              (_, i) {
+                            return Padding(
+                              padding:
+                                  const EdgeInsets
+                                      .only(
+                                bottom:
+                                    10,
                               ),
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.all(
-                                  15,
-                                ),
-                                child: Text(
+                              child:
+                                  glassCard(
+                                child:
+                                    Text(
                                   results[i]['content']
                                           ?.toString() ??
                                       '',
+                                  style:
+                                      const TextStyle(
+                                    fontSize:
+                                        15,
+                                    height:
+                                        1.5,
+                                  ),
                                 ),
                               ),
                             );
@@ -1444,35 +2234,50 @@ class _SearchPageState extends State<SearchPage> {
 
 class NotificationsPage
     extends StatelessWidget {
-  const NotificationsPage({super.key});
+  const NotificationsPage({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title:
+            const Text(
           'Notifications',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
           ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(12),
-        children: const [
-          Card(
-            color: Color(0xFF12151C),
-            child: ListTile(
-              leading: CircleAvatar(
+        padding:
+            const EdgeInsets.all(12),
+        children: [
+          glassCard(
+            child: const ListTile(
+              contentPadding:
+                  EdgeInsets.zero,
+              leading:
+                  CircleAvatar(
                 backgroundColor:
-                    Color(0xFF7C4DFF),
-                child:
-                    Icon(Icons.notifications),
+                    primaryColor,
+                child: Icon(
+                  Icons
+                      .celebration_rounded,
+                ),
               ),
-              title:
-                  Text('Welcome to SocialBook 🎉'),
-              subtitle:
-                  Text('Your account is ready'),
+              title: Text(
+                'Welcome to SocialBook 🎉',
+                style: TextStyle(
+                  fontWeight:
+                      FontWeight.bold,
+                ),
+              ),
+              subtitle: Text(
+                'Your account is ready',
+              ),
             ),
           ),
         ],
@@ -1485,36 +2290,44 @@ class NotificationsPage
 // PROFILE
 // ============================================================
 
-class ProfilePage extends StatefulWidget {
+class ProfilePage
+    extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
-  State<ProfilePage> createState() =>
-      _ProfilePageState();
+  State<ProfilePage>
+      createState() =>
+          _ProfilePageState();
 }
 
 class _ProfilePageState
     extends State<ProfilePage> {
   String get name {
-    final user = supabase.auth.currentUser;
+    final user =
+        supabase.auth.currentUser;
 
-    return user?.userMetadata?['full_name']
+    return user
+            ?.userMetadata?[
+                'full_name']
             ?.toString() ??
-        user?.email?.split('@').first ??
+        user?.email
+            ?.split('@')
+            .first ??
         'SocialBook User';
   }
 
   String get email {
-    return supabase.auth.currentUser?.email ?? '';
-  }
-
-  Future<void> logout() async {
-    await supabase.auth.signOut();
+    return supabase.auth
+            .currentUser
+            ?.email ??
+        '';
   }
 
   Future<void> editName() async {
     final controller =
-        TextEditingController(text: name);
+        TextEditingController(
+      text: name,
+    );
 
     final value =
         await showDialog<String>(
@@ -1522,30 +2335,42 @@ class _ProfilePageState
       builder: (_) {
         return AlertDialog(
           title:
-              const Text('Edit Name'),
-          content: TextField(
-            controller: controller,
+              const Text(
+            'Edit Name',
+          ),
+          content:
+              TextField(
+            controller:
+                controller,
             decoration:
                 const InputDecoration(
-              hintText: 'Your name',
+              hintText:
+                  'Your name',
             ),
           ),
           actions: [
             TextButton(
               onPressed: () =>
-                  Navigator.pop(context),
+                  Navigator.pop(
+                context,
+              ),
               child:
-                  const Text('Cancel'),
+                  const Text(
+                'Cancel',
+              ),
             ),
             FilledButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  controller.text.trim(),
-                );
-              },
+              onPressed: () =>
+                  Navigator.pop(
+                context,
+                controller
+                    .text
+                    .trim(),
+              ),
               child:
-                  const Text('Save'),
+                  const Text(
+                'Save',
+              ),
             ),
           ],
         );
@@ -1554,15 +2379,18 @@ class _ProfilePageState
 
     controller.dispose();
 
-    if (value == null || value.isEmpty) {
+    if (value == null ||
+        value.isEmpty) {
       return;
     }
 
     try {
-      await supabase.auth.updateUser(
+      await supabase.auth
+          .updateUser(
         UserAttributes(
           data: {
-            'full_name': value,
+            'full_name':
+                value,
           },
         ),
       );
@@ -1574,29 +2402,37 @@ class _ProfilePageState
           'Profile update হয়েছে',
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         message(
           context,
-          'Profile update করা যায়নি: $e',
+          'Profile update করা যায়নি',
         );
       }
     }
+  }
+
+  Future<void> logout() async {
+    await supabase.auth
+        .signOut();
   }
 
   @override
   Widget build(BuildContext context) {
     final letter =
         name.isNotEmpty
-            ? name[0].toUpperCase()
+            ? name[0]
+                .toUpperCase()
             : 'U';
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title:
+            const Text(
           'Profile',
           style: TextStyle(
-            fontWeight: FontWeight.bold,
+            fontWeight:
+                FontWeight.bold,
           ),
         ),
       ),
@@ -1604,70 +2440,91 @@ class _ProfilePageState
         padding:
             const EdgeInsets.all(20),
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(
+            height: 20,
+          ),
+
           Center(
-            child: CircleAvatar(
+            child:
+                userAvatar(
+              name,
               radius: 60,
-              backgroundColor:
-                  const Color(0xFF7C4DFF),
-              child: Text(
-                letter,
-                style: const TextStyle(
-                  fontSize: 44,
-                  fontWeight:
-                      FontWeight.bold,
-                ),
-              ),
             ),
           ),
-          const SizedBox(height: 18),
+
+          const SizedBox(
+            height: 18,
+          ),
+
           Center(
             child: Text(
               name,
-              style: const TextStyle(
+              style:
+                  const TextStyle(
                 fontSize: 26,
                 fontWeight:
                     FontWeight.bold,
               ),
             ),
           ),
-          const SizedBox(height: 7),
+
+          const SizedBox(
+            height: 7,
+          ),
+
           Center(
             child: Text(
               email,
               style: TextStyle(
-                color:
-                    Colors.grey.shade500,
+                color: Colors
+                    .grey
+                    .shade500,
               ),
             ),
           ),
-          const SizedBox(height: 30),
-          Card(
-            color:
-                const Color(0xFF12151C),
+
+          const SizedBox(
+            height: 30,
+          ),
+
+          glassCard(
+            padding:
+                EdgeInsets.zero,
             child: Column(
               children: [
                 ListTile(
-                  leading: const Icon(
-                    Icons.edit_outlined,
+                  leading:
+                      const Icon(
+                    Icons
+                        .edit_outlined,
                   ),
-                  title: const Text(
+                  title:
+                      const Text(
                     'Edit Profile',
                   ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
+                  trailing:
+                      const Icon(
+                    Icons
+                        .chevron_right,
                   ),
-                  onTap: editName,
+                  onTap:
+                      editName,
                 ),
+
                 ListTile(
-                  leading: const Icon(
-                    Icons.settings_outlined,
+                  leading:
+                      const Icon(
+                    Icons
+                        .settings_outlined,
                   ),
-                  title: const Text(
+                  title:
+                      const Text(
                     'Settings',
                   ),
-                  trailing: const Icon(
-                    Icons.chevron_right,
+                  trailing:
+                      const Icon(
+                    Icons
+                        .chevron_right,
                   ),
                   onTap: () {
                     message(
@@ -1676,23 +2533,51 @@ class _ProfilePageState
                     );
                   },
                 ),
+
                 ListTile(
-                  leading: const Icon(
-                    Icons.logout,
-                    color: Colors.redAccent,
+                  leading:
+                      const Icon(
+                    Icons
+                        .logout_rounded,
+                    color:
+                        Colors.redAccent,
                   ),
-                  title: const Text(
+                  title:
+                      const Text(
                     'Logout',
-                    style: TextStyle(
-                      color: Colors.redAccent,
+                    style:
+                        TextStyle(
+                      color:
+                          Colors.redAccent,
                     ),
                   ),
-                  onTap: logout,
+                  onTap:
+                      logout,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 30),
+
+          const SizedBox(
+            height: 35,
+          ),
+
+          const Center(
+            child: Text(
+              'SocialBook',
+              style: TextStyle(
+                color: Colors.grey,
+                fontSize: 13,
+                fontWeight:
+                    FontWeight.w600,
+              ),
+            ),
+          ),
+
+          const SizedBox(
+            height: 5,
+          ),
+
           const Center(
             child: Text(
               'Creator: Omor Faruk',
@@ -1701,6 +2586,10 @@ class _ProfilePageState
                 fontSize: 12,
               ),
             ),
+          ),
+
+          const SizedBox(
+            height: 20,
           ),
         ],
       ),
